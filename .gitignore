@@ -1,6 +1,6 @@
-public/bundle.*
-public/*.imba.js
-public/*.imba.js.map
+# public/bundle.*
+# public/*.imba.js
+# public/*.imba.js.map
 
 .DS_Store
 

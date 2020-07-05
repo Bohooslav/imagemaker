@@ -1,51 +1,44 @@
 import {Add} from './tags/Add'
 import {Logo} from './tags/Logo'
+import {ChooseImage} from './tags/ChooseImage'
+import {CroppedImage} from './tags/CroppedImage'
+import {CropImage} from './tags/CropImage'
+import {ImageState} from './ImageState'
 let counter = 0
 
 css @root, body
-	p:0
-	m:0
 	1radius: 5px
-	box-sizing: border-box
 
-tag Card
-	def incr
-		counter++
-	def render
-		<self>
-			<h1.total> counter
-			<Add @click.incr>
-				<b> "add"
-			<h3.reset @click=(do counter = 0)> "reset"
-	css &
-		bg: white
-		w:300px py:3em px:2em radius: 2radius
-		display: flex fld: column jc: center ai: middle
-		ff: sans 
-		shadow: xl
-		& .total
-			color: gray9
-			fs:3em
-			mt:0px
-		& .reset
-			color: gray4 @hover: purple6 @active: purple9 cursor: pointer
+css *
+	box-sizing: border-box
+	scrollbar-color: rgba(68, 119, 255, 0.1) rgba(0, 0, 0, 0)
+	scrollbar-width: auto
+	m: 0
+	p: 0
+	scroll-behavior: smooth
+	-webkit-overflow-scrolling: touch
+	-webkit-tap-highlight-color: transparent
+
+
 tag app-root
+	imgstate = new ImageState
+
 	def render
 		<self>
+			<Add[mt: 12px] @click=imgstate.back()> "Back"
 			<Logo>
-			<Card>
+			unless imgstate.stage
+				<ChooseImage bind=imgstate>
+			elif imgstate.stage == 1
+				<CropImage bind=imgstate>
+			else
+				<CroppedImage bind=imgstate>
+
 	css &
-		display: flex
+		d: flex
 		fld: column
 		ai:center
 		ta:center
 		bg:gray9
-		h: 100vh
+		min-height: 100vh
 		br: 2space
-
-// Smart styles Documentation [WIP]
-// https://github.com/imba/imba.io/blob/v2-styles/content/articles/styling.md
-// https://github.com/imba/imba.io/blob/v2-styles/content/guides/15-styling.md
-// https://github.com/imba/imba/blob/master/src/compiler/styler.imba
-// https://github.com/imba/imba/pull/362
-

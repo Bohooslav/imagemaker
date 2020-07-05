@@ -161,8 +161,13 @@ export tag CropImage
 
 	def render
 		<self[pos: relative d:block overflow:visible bg:blue1]>
+			# Canvas with image
 			canvas
+
+			# Block for resizing 
 			<div[pos: absolute d: block l: 0 t: 0 w: {width}px h: {height}px bg: rgba(0, 0, 0, 0.5) clip-path: polygon(0% 0%, 0% 100%, {crop.left}px {crop.top + crop.height}px, {crop.left}px {crop.top}px, {crop.left + crop.width}px {crop.top}px, {crop.left + crop.width}px {crop.top + crop.height}px, {crop.left}px {crop.top + crop.height}px, 0% 100%, 100% 100%, 100% 0%);]>
+			
+			# Here is draggers for resizing image
 			<div[pos: absolute d: block l: 0 t: 0 w: {width}px h: {height}px]>
 				<div[t: {crop.top - 8}px l: {crop.left + (crop.width)/2 - 8}px cursor: ns-resize].dragger @touch=dragN>
 				<div[t: {crop.top + (crop.height)/2 - 8}px l: {crop.left + crop.width - 8}px cursor: ew-resize].dragger @touch=dragE>

@@ -25,7 +25,7 @@ tag app-root
 
 	def render
 		<self>
-			<Add[mt: 12px] @click=imgstate.back()> "Back"
+			<Add[mt: 12px pos: absolute l: 8px] @click=imgstate.back()> "Back"
 			<Logo>
 			unless imgstate.stage
 				<ChooseImage bind=imgstate>
@@ -42,3 +42,4 @@ tag app-root
 		bg:gray9
 		min-height: 100vh
 		br: 2space
+		pb: 64px

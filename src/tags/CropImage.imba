@@ -150,6 +150,10 @@ export tag CropImage
 					crop.left = 0
 	
 	def cropImg
+		# In this view I get crop mesures on resized image,
+		# in the next stage will be "real" cropping,
+		# which will be on full image,
+		# so for that I convert the mesures to percentages
 		crop.width = crop.width / width
 		crop.height = crop.height / height
 		crop.left = crop.left / width
@@ -164,23 +168,26 @@ export tag CropImage
 			# Canvas with image
 			canvas
 
-			# Block for resizing 
+			# Block that shows the "gray area" around cropped area
 			<div[pos: absolute d: block l: 0 t: 0 w: {width}px h: {height}px bg: rgba(0, 0, 0, 0.5) clip-path: polygon(0% 0%, 0% 100%, {crop.left}px {crop.top + crop.height}px, {crop.left}px {crop.top}px, {crop.left + crop.width}px {crop.top}px, {crop.left + crop.width}px {crop.top + crop.height}px, {crop.left}px {crop.top + crop.height}px, 0% 100%, 100% 100%, 100% 0%);]>
-			
+
 			# Here is draggers for resizing image
 			<div[pos: absolute d: block l: 0 t: 0 w: {width}px h: {height}px]>
+				# Side resizers
 				<div[t: {crop.top - 8}px l: {crop.left + (crop.width)/2 - 8}px cursor: ns-resize].dragger @touch=dragN>
 				<div[t: {crop.top + (crop.height)/2 - 8}px l: {crop.left + crop.width - 8}px cursor: ew-resize].dragger @touch=dragE>
 				<div[t: {crop.top + crop.height - 8}px l: {crop.left + (crop.width)/2 - 8}px cursor: ns-resize].dragger @touch=dragS>
 				<div[t: {crop.top + (crop.height)/2 - 8}px l: {crop.left - 8}px cursor: ew-resize].dragger @touch=dragW>
 
+				# Corner resizers
 				<div[t: {crop.top - 8}px l: {crop.left - 8}px cursor: nwse-resize].dragger @touch=dragNW>
 				<div[t: {crop.top - 8}px l: {crop.left + crop.width - 8}px cursor: nesw-resize].dragger @touch=dragNE>
 				<div[t: {crop.top + crop.height - 8}px l: {crop.left + crop.width - 8}px cursor: nwse-resize].dragger @touch=dragSE>
 				<div[t: {crop.top + crop.height - 8}px l: {crop.left - 8}px cursor: nesw-resize].dragger @touch=dragSW>
 
+				# Square for dragging the crop area
 				<[pos: absolute t: {crop.top}px l: {crop.left}px w: {crop.width}px h: {crop.height}px cursor: move] @touch=dragCropArea>
-				<Add[pos: absolute t: {height + 8}px w: {width}px l: 0] @click=cropImg> "Next"
+			<Add[pos: absolute t: {height + 8}px w: {width}px l: 0] @click=cropImg> "Next"
 
 	css .dragger
 		pos: absolute

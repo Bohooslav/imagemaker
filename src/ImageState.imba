@@ -25,6 +25,9 @@ export class ImageState
 		if stage
 			stage--
 
+	# # Returns size optimized for 800x600 frame
+	# # The frame may has another dimensions
+	# TODO! optimaze for different devices
 	def getSize width, height
 		let MAX_WIDTH = 800
 		let MAX_HEIGHT = 600

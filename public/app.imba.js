@@ -2517,14 +2517,11 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		
 		const crop = this.data.crop;
 		const image = this.data.image;
-		
 		[this.width,this.height] = this.data.getSize(crop.width * image.width,image.height * crop.height);
 		
-		console.log("EDFVNDIFJ",image.width,image.height,this.width,this.height);
 		canvas.width = this.width;
 		canvas.height = this.height;
 		canvas.imageSmoothingQuality = 'high';
-		console.log(crop.top * image.height,crop.left * image.width,crop.width * image.width,crop.height * image.height);
 		return canvas.getContext('2d').drawImage(image,crop.left * image.width,crop.top * image.height,crop.width * image.width,crop.height * image.height,0,0,this.width,this.height);
 	}
 	
@@ -2784,6 +2781,10 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	
 	cropImg(){
 		
+		// In this view I get crop mesures on resized image,
+		// in the next stage will be "real" cropping,
+		// which will be on full image,
+		// so for that I convert the mesures to percentages
 		crop.width = crop.width / this.width;
 		crop.height = crop.height / this.height;
 		crop.left = crop.left / this.width;
@@ -2795,14 +2796,14 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	
 	
 	render(){
-		var self = this, t$01, $c$0, $b$0, $d$0, $v$0, $t$1, $v$1, $t$2, $b$2, $d$2, $v$2, $t$cwS;
+		var self = this, t$01, $c$0, $b$0, $d$0, $v$0, $t$1, $b$1, $d$1, $v$1, $t$2, $b$2, $d$2, $v$2, $t$cwS;
 		
 		t$01=this;
 		t$01.open$();
 		$c$0 = ($b$0=$d$0=1,t$01.$) || ($b$0=$d$0=0,t$01.$={});
 		((!$b$0||$d$0&2) && t$01.flagSelf$('f0vwtmc'));
 		($v$0=canvas$1,($v$0===$c$0.bb&&$b$0) || ($c$0.bb_ = t$01.insert$($c$0.bb=$v$0,128,$c$0.bb_)));
-		$t$1 = ($c$0.bc) || ($c$0.bc=$t$1=imba.createElement('div',t$01,'f0vwtmf',null));
+		$t$1 = ($b$1=$d$1=1,$c$0.bc) || ($b$1=$d$1=0,$c$0.bc=$t$1=imba.createElement('div',t$01,'f0vwtmf',null));
 		($v$1=this.width,$v$1===$c$0.bd || ($t$1.css$var('--f0vwtmg',$c$0.bd=$v$1,'px','w')));
 		($v$1=this.height,$v$1===$c$0.be || ($t$1.css$var('--f0vwtmh',$c$0.be=$v$1,'px','h')));
 		($v$1=crop.left,$v$1===$c$0.bf || ($t$1.css$var('--f0vwtmi',$c$0.bf=$v$1,'px','clip-path')));
@@ -2815,7 +2816,7 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 		($v$1=crop.top + crop.height,$v$1===$c$0.bm || ($t$1.css$var('--f0vwtmp',$c$0.bm=$v$1,'px','clip-path')));
 		($v$1=crop.left,$v$1===$c$0.bn || ($t$1.css$var('--f0vwtmq',$c$0.bn=$v$1,'px','clip-path')));
 		($v$1=crop.top + crop.height,$v$1===$c$0.bo || ($t$1.css$var('--f0vwtmr',$c$0.bo=$v$1,'px','clip-path')));
-		$t$1 = ($c$0.bp) || ($c$0.bp=$t$1=imba.createElement('div',t$01,'f0vwtms',null));
+		$t$1 = ($b$1=$d$1=1,$c$0.bp) || ($b$1=$d$1=0,$c$0.bp=$t$1=imba.createElement('div',t$01,'f0vwtms',null));
 		($v$1=this.width,$v$1===$c$0.bq || ($t$1.css$var('--f0vwtmt',$c$0.bq=$v$1,'px','w')));
 		($v$1=this.height,$v$1===$c$0.br || ($t$1.css$var('--f0vwtmu',$c$0.br=$v$1,'px','h')));
 		$t$2 = ($b$2=$d$2=1,$c$0.bs) || ($b$2=$d$2=0,$c$0.bs=$t$2=imba.createElement('div',$t$1,'f0vwtmv dragger',null));
@@ -2874,16 +2875,16 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
 			return self.dragCropArea(e);
 		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.cv) || ($b$2=$d$2=0,$c$0.cv=$t$2=imba.createComponent(Add,$t$1,'f0vwtmay',"Next"));
-		$t$cwS = $t$2.slot$('__',$c$0);
-		($v$2=this.height + 8,$v$2===$c$0.cx || ($t$2.css$var('--f0vwtmaz',$c$0.cx=$v$2,'px','t')));
-		($v$2=this.width,$v$2===$c$0.cy || ($t$2.css$var('--f0vwtmba',$c$0.cy=$v$2,'px','w')));
-		$b$2 || ($t$2.on$(`click`,{$_: [function(e,$) {
+		$t$1 = ($b$1=$d$1=1,$c$0.cv) || ($b$1=$d$1=0,$c$0.cv=$t$1=imba.createComponent(Add,t$01,'f0vwtmay',"Next"));
+		$t$cwS = $t$1.slot$('__',$c$0);
+		($v$1=this.height + 8,$v$1===$c$0.cx || ($t$1.css$var('--f0vwtmaz',$c$0.cx=$v$1,'px','t')));
+		($v$1=this.width,$v$1===$c$0.cy || ($t$1.css$var('--f0vwtmba',$c$0.cy=$v$1,'px','w')));
+		$b$1 || ($t$1.on$(`click`,{$_: [function(e,$) {
 			return self.cropImg(e);
 		}]},this));
-		$b$2 || !$t$2.setup || $t$2.setup($d$2);
-		$t$2.end$($d$2);
-		$b$2 || $t$2.insertInto$($t$1);
+		$b$1 || !$t$1.setup || $t$1.setup($d$1);
+		$t$1.end$($d$1);
+		$b$1 || $t$1.insertInto$(t$01);
 		t$01.close$($d$0);
 		return t$01;
 	}
@@ -3029,6 +3030,9 @@ class ImageState {
 			return this.stage--;
 		}	}
 	
+	// # Returns size optimized for 800x600 frame
+	// # The frame may has another dimensions
+	// TODO! optimaze for different devices
 	getSize(width,height){
 		
 		let MAX_WIDTH = 800;
@@ -3120,7 +3124,7 @@ class AppRootComponent extends imba.tags.get('component','ImbaElement') {
 	
 } AppRootComponent.init$(); imba.tags.define('app-root',AppRootComponent,{});
 
-imba.inlineStyles(":root,body {--u_radius: 5px;}\n\n* {box-sizing: border-box;\nscrollbar-color: rgba(68, 119, 255, 0.1) rgba(0, 0, 0, 0);\nscrollbar-width: auto;\nmargin: 0rem;\npadding: 0rem;\nscroll-behavior: smooth;\n-webkit-overflow-scrolling: touch;\n-webkit-tap-highlight-color: hsla(0.00,0.00%,100.00%,0%);}\n\n.gw1m0vc:not(#_):not(#_) {margin-top: 12px;}\n\napp-root:not(#_) {display: flex;\nflex-direction: column;\nalign-items: center;\ntext-align: center;\nbackground: hsla(220.00,25.71%,13.73%,100%);\nmin-height: 100vh;\nborder-radius: var(--border-radius-2space,2space);}\n\n");
+imba.inlineStyles(":root,body {--u_radius: 5px;}\n\n* {box-sizing: border-box;\nscrollbar-color: rgba(68, 119, 255, 0.1) rgba(0, 0, 0, 0);\nscrollbar-width: auto;\nmargin: 0rem;\npadding: 0rem;\nscroll-behavior: smooth;\n-webkit-overflow-scrolling: touch;\n-webkit-tap-highlight-color: hsla(0.00,0.00%,100.00%,0%);}\n\n.gw1m0vc:not(#_):not(#_) {margin-top: 12px;\nposition: absolute;\nleft: 8px;}\n\napp-root:not(#_) {display: flex;\nflex-direction: column;\nalign-items: center;\ntext-align: center;\nbackground: hsla(220.00,25.71%,13.73%,100%);\nmin-height: 100vh;\nborder-radius: var(--border-radius-2space,2space);\npadding-bottom: 64px;}\n\n");
 /*
 :root,body {--u_radius: 5px;}
 
@@ -3133,7 +3137,9 @@ scroll-behavior: smooth;
 -webkit-overflow-scrolling: touch;
 -webkit-tap-highlight-color: hsla(0.00,0.00%,100.00%,0%);}
 
-.gw1m0vc:not(#_):not(#_) {margin-top: 12px;}
+.gw1m0vc:not(#_):not(#_) {margin-top: 12px;
+position: absolute;
+left: 8px;}
 
 app-root:not(#_) {display: flex;
 flex-direction: column;
@@ -3141,7 +3147,8 @@ align-items: center;
 text-align: center;
 background: hsla(220.00,25.71%,13.73%,100%);
 min-height: 100vh;
-border-radius: var(--border-radius-2space,2space);}
+border-radius: var(--border-radius-2space,2space);
+padding-bottom: 64px;}
 
 
 */

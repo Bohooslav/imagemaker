@@ -2507,27 +2507,182 @@ choose-image-mny5rm button:not(#_):active {--shade: hsla(254.37,41.04%,33.92%,10
 
 */
 
-var $t$0;
+function iter$$4(a){ return a ? (a.toIterable ? a.toIterable() : a) : []; }var $1 = new WeakMap(), $2 = new WeakMap(), $3 = new WeakMap(), $t$0;
 let canvas = (($t$0=imba.createElement('canvas',null,'e6wu0bb',null)),
 $t$0);
 
 class CroppedImage extends imba.tags.get('component','ImbaElement') {
+	static init$(){
+		
+		return this;
+	}
+	init$(){
+		super.init$();return undefined;
+	}
+	
+	set image(value) {
+		$1.set(this,value);
+	}
+	get image() {
+		if (!$1.has(this)) { $1.set(this,new Image); }		return $1.get(this);
+	}
+	set text(value) {
+		$2.set(this,value);
+	}
+	get text() {
+		return $2.has(this) ? $2.get(this) : "Hello dad :) mage(data.image, data.crop.left * data.image.width, data.crop.top * data.image.height, data.crop.width * data.image.width, data.crop.height * data.ima";
+	}
+	set font(value) {
+		$3.set(this,value);
+	}
+	get font() {
+		if (!$3.has(this)) { $3.set(this,{
+			size: 30,
+			family: "Arial",
+			color: "white",
+			align: "center",
+			lineHeight: 1.5
+		}); }		return $3.get(this);
+	}
 	
 	mount(){
 		
-		const crop = this.data.crop;
-		const image = this.data.image;
-		[this.width,this.height] = this.data.getSize(crop.width * image.width,image.height * crop.height);
+		// Before painting text I use crop data to crop original image
+		[this.width,this.height] = this.data.getSize(this.data.crop.width * this.data.uploaded_image.width,this.data.uploaded_image.height * this.data.crop.height);
 		
 		canvas.width = this.width;
 		canvas.height = this.height;
 		canvas.imageSmoothingQuality = 'high';
-		return canvas.getContext('2d').drawImage(image,crop.left * image.width,crop.top * image.height,crop.width * image.width,crop.height * image.height,0,0,this.width,this.height);
+		return this.renderImage();
 	}
 	
+	awaken(){
+		
+		this.renderImage();
+		return this.calculateLuminance();
+	}
+	
+	
+	// Needed to define correct font collor. 
+	// Dark on lighter pictures and light on darker
+	calculateLuminance(){
+		
+		let rgb = this.getAverageRGB();
+		document.body.children[2].style.backgroundColor = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
+		let Y = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
+		return console.log(Y);
+	}
+	
+	renderImage(){
+		
+		let ctx = canvas.getContext('2d');
+		ctx.save();
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+		
+		// StackBlur.image(data.image, canvas, 4, no)
+		ctx.drawImage(this.data.image,0,0,this.width,this.height);
+		
+		this.drawText(ctx);
+		
+		ctx.restore();
+		return imba.commit();
+	}
+	
+	
+	drawText(ctx){
+		
+		ctx.font = this.font.size + 'px ' + this.font.family;
+		ctx.textAlign = this.font.align;
+		ctx.fillStyle = this.font.color;
+		return this.wrapText(ctx,this.text,canvas.width / 2,canvas.height / 2,canvas.width,this.font.lineHeight * this.font.size);
+		
+	}
+	
+	wrapText(context,text,x,y,maxWidth,lineHeight){
+		var $res;
+		
+		let words = text.split(' ');
+		let line = '';
+		let lines = [];
+		let total_text_height = lineHeight;
+		
+		// Generates an array of wrapped line and
+		// calculates the height of future text to center it later
+		for (let len = words.length, n = 0, rd = len - n; (rd > 0) ? (n < len) : (n > len); (rd > 0) ? (n++) : (n--)) {
+			
+			let testLine = line + words[n] + ' ';
+			let metrics = context.measureText(testLine);
+			let testWidth = metrics.width;
+			if ((testWidth > maxWidth && n > 0)) {
+				
+				lines.push(line);
+				line = words[n] + ' ';
+				total_text_height += lineHeight;
+			} else {
+				
+				line = testLine;
+			}		}		lines.push(line);
+		
+		// TODO Before drawing text check out if it can be fitted in the canvas frames
+		if (total_text_height > canvas.height) {
+			
+			console.log("Do something with it Bo!");
+		}		
+		// Center the text position around y coordinate
+		y = y - total_text_height / 2 + lineHeight;
+		// Write the lines from top to bottom
+		$res = [];
+		for (let $i = 0, $items = iter$$4(lines), $len = $items.length; $i < $len; $i++) {
+			let line = $items[$i];
+			
+			context.fillText(line,x,y);
+			// Change position of next line to be lower
+			$res.push((y += lineHeight));
+		}		return $res;
+	}
+	
+	getAverageRGB(){
+		
+		let blockSize = 5;// only visit every 5 pixels
+		let defaultRGB = {r: 0,g: 0,b: 0};// for non-supporting envs
+		let context = canvas.getContext && canvas.getContext('2d');
+		let imgdata;
+		let i = -4;
+		let rgb = {r: 0,g: 0,b: 0};
+		let count = 0;
+		
+		if (!(context)) {
+			
+			return defaultRGB;
+			
+		}		try {
+			
+			imgdata = context.getImageData(0,0,canvas.width,canvas.height);
+		} catch (e) {
+			
+			// security error, img on diff domain */alert('x')
+			return defaultRGB;
+		}		
+		while ((i += blockSize * 4) < imgdata.data.length){
+			
+			++count;
+			rgb.r += imgdata.data[i];
+			rgb.g += imgdata.data[i + 1];
+			rgb.b += imgdata.data[i + 2];
+		}		
+		// ~~ used to floor values
+		rgb.r = ~~(rgb.r / count);
+		rgb.g = ~~(rgb.g / count);
+		rgb.b = ~~(rgb.b / count);
+		
+		return rgb;
+		
+		
+	}
 	render(){
 		var t$01, $c$0, $b$0, $d$0, $v$0;
 		
+		// renderImage()
 		t$01=this;
 		t$01.open$();
 		$c$0 = ($b$0=$d$0=1,t$01.$) || ($b$0=$d$0=0,t$01.$={});
@@ -2535,7 +2690,7 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		t$01.close$($d$0);
 		return t$01;
 	}
-} imba.tags.define('cropped-image-e6wu0b',CroppedImage,{});
+} CroppedImage.init$(); imba.tags.define('cropped-image-e6wu0b',CroppedImage,{});
 
 imba.inlineStyles(".e6wu0bb:not(#_):not(#_) {display: block;}\n\n");
 /*
@@ -2544,7 +2699,7 @@ imba.inlineStyles(".e6wu0bb:not(#_):not(#_) {display: block;}\n\n");
 
 */
 
-var $1 = new WeakMap(), $2 = new WeakMap(), $t$0$1;
+var $1$1 = new WeakMap(), $2$1 = new WeakMap(), $t$0$1;
 
 // Here we save crop information
 let crop = {
@@ -2576,21 +2731,21 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	}
 	
 	set width(value) {
-		$1.set(this,value);
+		$1$1.set(this,value);
 	}
 	get width() {
-		return $1.get(this);
+		return $1$1.get(this);
 	}
 	set height(value) {
-		$2.set(this,value);
+		$2$1.set(this,value);
 	}
 	get height() {
-		return $2.get(this);
+		return $2$1.get(this);
 	}
 	
 	mount(){
 		
-		[this.width,this.height] = this.data.getSize(this.data.image.width,this.data.image.height);
+		[this.width,this.height] = this.data.getSize(this.data.uploaded_image.width,this.data.uploaded_image.height);
 		
 		crop.width = this.width;
 		crop.height = this.height;
@@ -2601,7 +2756,8 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 		canvas$1.width = this.width;
 		canvas$1.height = this.height;
 		canvas$1.imageSmoothingQuality = 'high';
-		canvas$1.getContext('2d').drawImage(this.data.image,0,0,this.width,this.height);
+		canvas$1.getContext('2d').clearRect(0,0,canvas$1.width,canvas$1.height);
+		canvas$1.getContext('2d').drawImage(this.data.uploaded_image,0,0,this.width,this.height);
 		return imba.commit();
 	}
 	
@@ -2614,52 +2770,81 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	moveN(e){
 		
 		const new_height = bcrop.height - e.dy;
-		if (e.dy < 0 && (bcrop.height - e.dy > this.height || bcrop.top + e.dy < 0)) {
+		if (e.dy < 0 && (new_height > this.height || bcrop.top + e.dy < 0) && crop.width * 2 >= new_height) {
 			
 			crop.top = 0;
 			return crop.height = bcrop.height + bcrop.top;
-		} else if (this.height >= new_height && new_height >= 64) {
+		} else if (new_height >= crop.width * 2) {
+			
+			crop.height = crop.width * 2;
+			return crop.top = (bcrop.height - crop.height) + bcrop.top;
+		} else if (this.height >= new_height && new_height >= crop.width / 2 && this.height >= 64) {
 			
 			crop.height = new_height;
 			return crop.top = bcrop.top + e.dy;
+		} else {
+			
+			crop.height = (crop.width / 2 > 64) ? (crop.width / 2) : 64;
+			return crop.top = bcrop.top + (bcrop.height - crop.height);
 		}	}
 	
 	moveW(e){
 		
 		const new_width = bcrop.width - e.dx;
-		if (e.dx < 0 && (bcrop.width - e.dx > this.width || bcrop.left + e.dx < 0)) {
+		if (e.dx < 0 && (bcrop.width - e.dx > this.width || bcrop.left + e.dx < 0) && crop.height * 2 >= new_width) {
 			
 			crop.left = 0;
 			return crop.width = bcrop.width + bcrop.left;
-		} else if (this.width >= new_width && new_width >= 64) {
+		} else if (new_width >= crop.height * 2) {
+			
+			crop.width = crop.height * 2;
+			return crop.left = (bcrop.width - crop.width) + bcrop.left;
+		} else if (this.width >= new_width && new_width >= crop.height / 2 && this.height >= 64) {
 			
 			crop.width = new_width;
 			return crop.left = bcrop.left + e.dx;
+		} else {
+			
+			crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
+			return crop.left = bcrop.left + (bcrop.width - crop.width);
 		}	}
+	
 	
 	moveS(e){
 		
 		const new_height = bcrop.height + e.dy;
-		if (e.dy > 0 && bcrop.top + bcrop.height + e.dy > this.height) {
+		if (e.dy > 0 && bcrop.top + bcrop.height + e.dy > this.height && crop.width * 2 >= new_height) {
 			
 			return crop.height = this.height - bcrop.top;
-		} else if (this.height >= new_height && new_height >= 64) {
+		} else if (new_height >= crop.width * 2) {
+			
+			return crop.height = crop.width * 2;
+		} else if (this.height >= new_height && new_height >= crop.width / 2 && this.height >= 64) {
 			
 			return crop.height = new_height;
+		} else {
+			
+			return crop.height = (crop.width / 2 > 64) ? (crop.width / 2) : 64;
 		}	}
 	
 	moveE(e){
 		
 		const new_width = bcrop.width + e.dx;
-		if (e.dx > 0 && bcrop.left + bcrop.width + e.dx > this.width) {
+		if (e.dx > 0 && bcrop.left + bcrop.width + e.dx > this.width && crop.height * 2 >= new_width) {
 			
 			return crop.width = this.width - bcrop.left;
-		} else if (this.width >= new_width && new_width >= 64) {
+		} else if (new_width >= crop.height * 2) {
+			
+			return crop.width = crop.height * 2;
+		} else if (this.width >= new_width && new_width >= crop.height / 2 && this.height >= 64) {
 			
 			return crop.width = new_width;
+		} else {
+			
+			return crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
 		}	}
 	
-	// # Functions that trigger concrete functions to change concrete sides
+	// # # # # Functions that trigger concrete functions to change concrete sides
 	// Fonctions for sides changes
 	dragN(e){
 		
@@ -2779,7 +2964,8 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 					return crop.left = 0;
 				}			}		}	}
 	
-	cropImg(){
+	async cropImg(){
+		var self = this;
 		
 		// In this view I get crop mesures on resized image,
 		// in the next stage will be "real" cropping,
@@ -2791,9 +2977,24 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 		crop.top = crop.top / this.height;
 		
 		this.data.crop = crop;
-		return this.data.stage += 1;
+		
+		// # Get new optimized width, height and height for new canvas
+		[this.width,this.height] = this.data.getSize(crop.width * this.data.uploaded_image.width,this.data.uploaded_image.height * crop.height);
+		canvas$1.width = this.width;
+		canvas$1.height = this.height;
+		
+		// Paint the cropped image on canvas and get toDataURL image
+		canvas$1.getContext('2d').clearRect(0,0,canvas$1.width,canvas$1.height);
+		canvas$1.getContext('2d').drawImage(this.data.uploaded_image,crop.left * this.data.uploaded_image.width,crop.top * this.data.uploaded_image.height,crop.width * this.data.uploaded_image.width,crop.height * this.data.uploaded_image.height,0,0,this.width,this.height);
+		
+		this.data.image.src = canvas$1.toDataURL();
+		// Now applied changes, grap picture and in the next tick go to the next stage
+		return await imba.commit().then(function() {
+			
+			self.data.stage += 1;
+			return imba.commit();
+		});
 	}
-	
 	
 	render(){
 		var self = this, t$01, $c$0, $b$0, $d$0, $v$0, $t$1, $b$1, $d$1, $v$1, $t$2, $b$2, $d$2, $v$2, $t$cwS;
@@ -2970,7 +3171,7 @@ z-index: 3;}
 
 */
 
-var $1$1 = new WeakMap(), $2$1 = new WeakMap(), $3 = new WeakMap();
+var $1$2 = new WeakMap(), $2$2 = new WeakMap(), $3$1 = new WeakMap(), $4 = new WeakMap();
 class ImageState {
 	static init$(){
 		
@@ -2981,30 +3182,37 @@ class ImageState {
 		
 	}
 	
+	set uploaded_image(value) {
+		$1$2.set(this,value);
+	}
+	get uploaded_image() {
+		if (!$1$2.has(this)) { $1$2.set(this,new Image); }		return $1$2.get(this);
+	}
 	set image(value) {
-		$1$1.set(this,value);
+		$2$2.set(this,value);
 	}
 	get image() {
-		if (!$1$1.has(this)) { $1$1.set(this,new Image); }		return $1$1.get(this);
+		if (!$2$2.has(this)) { $2$2.set(this,new Image); }		return $2$2.get(this);
 	}
 	
 	set stage(value) {
-		$2$1.set(this,value);
+		$3$1.set(this,value);
 	}
 	get stage() {
-		return $2$1.has(this) ? $2$1.get(this) : 0;
+		return $3$1.has(this) ? $3$1.get(this) : 0;
 	}
 	set crop(value) {
-		$3.set(this,value);
+		$4.set(this,value);
 	}
 	get crop() {
-		if (!$3.has(this)) { $3.set(this,{
+		if (!$4.has(this)) { $4.set(this,{
 			left: 0,
 			top: 0,
 			width: 0,
 			height: 0
-		}); }		return $3.get(this);
+		}); }		return $4.get(this);
 	}
+	
 	
 	// def constructor
 	// 	console.log("initialize")
@@ -3015,7 +3223,7 @@ class ImageState {
 	drawImage(src){
 		var self = this;
 		
-		this.image.src = src;
+		this.uploaded_image.src = src;
 		return setTimeout(function() {
 			
 			self.stage = 1;
@@ -3051,7 +3259,7 @@ class ImageState {
 	}
 } ImageState.init$();
 
-var $1$2 = new WeakMap();
+var $1$3 = new WeakMap();
 
 
 
@@ -3068,10 +3276,10 @@ class AppRootComponent extends imba.tags.get('component','ImbaElement') {
 	}
 	
 	set imgstate(value) {
-		$1$2.set(this,value);
+		$1$3.set(this,value);
 	}
 	get imgstate() {
-		if (!$1$2.has(this)) { $1$2.set(this,new ImageState); }		return $1$2.get(this);
+		if (!$1$3.has(this)) { $1$3.set(this,new ImageState); }		return $1$3.get(this);
 	}
 	
 	render(){

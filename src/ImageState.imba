@@ -1,4 +1,5 @@
 export class ImageState
+	uploaded_image = new Image
 	image = new Image
 
 	stage = 0
@@ -9,6 +10,7 @@ export class ImageState
 		height: 0
 	}
 
+
 	# def constructor
 	# 	console.log("initialize")
 
@@ -16,7 +18,7 @@ export class ImageState
 	# 	self
 
 	def drawImage src
-		image.src = src
+		uploaded_image.src = src
 		setTimeout(&, 1) do
 			stage = 1
 			imba.commit()

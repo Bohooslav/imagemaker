@@ -1,6 +1,9 @@
 # const StackBlur = require('stackblur-canvas')
 import * as StackBlur from 'stackblur-canvas'
+import {MeasuringBox} from './MeasuringBox'
 let canvas = <canvas[d: block]>
+
+let measuringData = {}
 
 export tag CroppedImage
 	image = new Image
@@ -12,20 +15,33 @@ export tag CroppedImage
 		align: "center"
 		line-height: 1.5
 	}
+	blur = no
+	blur_radius = 4
+	text_crop = {
+		left: 0
+		top: 0
+		width: 0
+		height: 0
+	}
 
 	def mount
 		# Before painting text I use crop data to crop original image
 		[width, height] = data.getSize(data.crop.width * data.uploaded_image.width, data.uploaded_image.height * data.crop.height)
+		text_crop.width = width
+		text_crop.height = height
+		text_crop.left = 0
+		text_crop.top = 0
+		measuringData =
+			crop: text_crop
+			width: width
+			height: height
+			text_resizing: yes
 
 		canvas.width = width
 		canvas.height = height
 		canvas.imageSmoothingQuality = 'high'
 		renderImage()
-
-	def awaken
-		renderImage()
 		calculateLuminance()
-
 
 	# Needed to define correct font collor. 
 	# Dark on lighter pictures and light on darker
@@ -33,20 +49,27 @@ export tag CroppedImage
 		let rgb = getAverageRGB()
 		document.body.children[2].style.backgroundColor = 'rgb('+rgb.r+','+rgb.g+','+rgb.b+')'
 		let Y = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b
-		console.log Y
+		if Y < 128
+			font.color = "white"
+		else font.color = "black"
 
 	def renderImage
 		let ctx = canvas.getContext('2d')
 		ctx.save()
+		# Clear canvas before painting
 		ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-		# StackBlur.image(data.image, canvas, 4, no)
-		ctx.drawImage(data.image, 0, 0, width, height)
-
+		drawImage(ctx)
 		drawText(ctx)
-		
+
 		ctx.restore()
 		imba.commit()
+
+	def drawImage ctx
+		if blur
+			StackBlur.image(data.image, canvas, blur_radius, no)
+		else
+			ctx.drawImage(data.image, 0, 0, width, height)
 
 
 	def drawText ctx
@@ -121,6 +144,7 @@ export tag CroppedImage
 
 		
 	def render
-		# renderImage()
-		<self>
+		renderImage()
+		<self[pos: relative d:block w: {width}px h: {height}px overflow:visible bg:blue1]>
 			canvas
+			<MeasuringBox bind=measuringData>

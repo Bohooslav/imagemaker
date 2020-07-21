@@ -14,15 +14,15 @@ export tag ChooseImage
 	def onDropFile e
 		e.stopPropagation()
 		if window.File && window.FileReader && window.FileList && window.Blob
-			var files = e.dataTransfer.files
-			readFile(files[0])
+			readFile(e.dataTransfer.files[0])
+			# readFile({target: {files: e.dataTransfer.files}})
 		else
 			window.alert('The File APIs are not fully supported in this browser.')
 
 	def openFile
 		readFile = do(e)
 			let file = e.target.files[0]
-			if !file or file.type.slice(0,5) != 'image'
+			if !file or !(file.type.slice(0,5) == 'image' || file.type.slice(0,5) == 'video')
 				window.alert("Please choose image")
 				return
 			let reader = new FileReader()

@@ -10,7 +10,6 @@ export class ImageState
 		height: 0
 	}
 
-
 	# def constructor
 	# 	console.log("initialize")
 

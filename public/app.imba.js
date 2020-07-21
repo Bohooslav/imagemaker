@@ -2396,8 +2396,8 @@ class ChooseImage extends imba.tags.get('component','ImbaElement') {
 		e.stopPropagation();
 		if (window.File && window.FileReader && window.FileList && window.Blob) {
 			
-			var files = e.dataTransfer.files;
-			return this.readFile(files[0]);
+			return this.readFile(e.dataTransfer.files[0]);
+			// readFile({target: {files: e.dataTransfer.files}})
 		} else {
 			
 			return window.alert('The File APIs are not fully supported in this browser.');
@@ -2409,7 +2409,7 @@ class ChooseImage extends imba.tags.get('component','ImbaElement') {
 		this.readFile = function(e) {
 			
 			let file = e.target.files[0];
-			if (!(file) || file.type.slice(0,5) != 'image') {
+			if (!(file) || !((file.type.slice(0,5) == 'image' || file.type.slice(0,5) == 'video'))) {
 				
 				window.alert("Please choose image");
 				return;
@@ -2507,201 +2507,592 @@ choose-image-mny5rm button:not(#_):active {--shade: hsla(254.37,41.04%,33.92%,10
 
 */
 
-function iter$$4(a){ return a ? (a.toIterable ? a.toIterable() : a) : []; }var $1 = new WeakMap(), $2 = new WeakMap(), $3 = new WeakMap(), $t$0;
-let canvas = (($t$0=imba.createElement('canvas',null,'e6wu0bb',null)),
-$t$0);
+function _typeof(obj) {
+  "@babel/helpers - typeof";
 
-class CroppedImage extends imba.tags.get('component','ImbaElement') {
-	static init$(){
-		
-		return this;
-	}
-	init$(){
-		super.init$();return undefined;
-	}
-	
-	set image(value) {
-		$1.set(this,value);
-	}
-	get image() {
-		if (!$1.has(this)) { $1.set(this,new Image); }		return $1.get(this);
-	}
-	set text(value) {
-		$2.set(this,value);
-	}
-	get text() {
-		return $2.has(this) ? $2.get(this) : "Hello dad :) mage(data.image, data.crop.left * data.image.width, data.crop.top * data.image.height, data.crop.width * data.image.width, data.crop.height * data.ima";
-	}
-	set font(value) {
-		$3.set(this,value);
-	}
-	get font() {
-		if (!$3.has(this)) { $3.set(this,{
-			size: 30,
-			family: "Arial",
-			color: "white",
-			align: "center",
-			lineHeight: 1.5
-		}); }		return $3.get(this);
-	}
-	
-	mount(){
-		
-		// Before painting text I use crop data to crop original image
-		[this.width,this.height] = this.data.getSize(this.data.crop.width * this.data.uploaded_image.width,this.data.uploaded_image.height * this.data.crop.height);
-		
-		canvas.width = this.width;
-		canvas.height = this.height;
-		canvas.imageSmoothingQuality = 'high';
-		return this.renderImage();
-	}
-	
-	awaken(){
-		
-		this.renderImage();
-		return this.calculateLuminance();
-	}
-	
-	
-	// Needed to define correct font collor. 
-	// Dark on lighter pictures and light on darker
-	calculateLuminance(){
-		
-		let rgb = this.getAverageRGB();
-		document.body.children[2].style.backgroundColor = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
-		let Y = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
-		return console.log(Y);
-	}
-	
-	renderImage(){
-		
-		let ctx = canvas.getContext('2d');
-		ctx.save();
-		ctx.clearRect(0,0,canvas.width,canvas.height);
-		
-		// StackBlur.image(data.image, canvas, 4, no)
-		ctx.drawImage(this.data.image,0,0,this.width,this.height);
-		
-		this.drawText(ctx);
-		
-		ctx.restore();
-		return imba.commit();
-	}
-	
-	
-	drawText(ctx){
-		
-		ctx.font = this.font.size + 'px ' + this.font.family;
-		ctx.textAlign = this.font.align;
-		ctx.fillStyle = this.font.color;
-		return this.wrapText(ctx,this.text,canvas.width / 2,canvas.height / 2,canvas.width,this.font.lineHeight * this.font.size);
-		
-	}
-	
-	wrapText(context,text,x,y,maxWidth,lineHeight){
-		var $res;
-		
-		let words = text.split(' ');
-		let line = '';
-		let lines = [];
-		let total_text_height = lineHeight;
-		
-		// Generates an array of wrapped line and
-		// calculates the height of future text to center it later
-		for (let len = words.length, n = 0, rd = len - n; (rd > 0) ? (n < len) : (n > len); (rd > 0) ? (n++) : (n--)) {
-			
-			let testLine = line + words[n] + ' ';
-			let metrics = context.measureText(testLine);
-			let testWidth = metrics.width;
-			if ((testWidth > maxWidth && n > 0)) {
-				
-				lines.push(line);
-				line = words[n] + ' ';
-				total_text_height += lineHeight;
-			} else {
-				
-				line = testLine;
-			}		}		lines.push(line);
-		
-		// TODO Before drawing text check out if it can be fitted in the canvas frames
-		if (total_text_height > canvas.height) {
-			
-			console.log("Do something with it Bo!");
-		}		
-		// Center the text position around y coordinate
-		y = y - total_text_height / 2 + lineHeight;
-		// Write the lines from top to bottom
-		$res = [];
-		for (let $i = 0, $items = iter$$4(lines), $len = $items.length; $i < $len; $i++) {
-			let line = $items[$i];
-			
-			context.fillText(line,x,y);
-			// Change position of next line to be lower
-			$res.push((y += lineHeight));
-		}		return $res;
-	}
-	
-	getAverageRGB(){
-		
-		let blockSize = 5;// only visit every 5 pixels
-		let defaultRGB = {r: 0,g: 0,b: 0};// for non-supporting envs
-		let context = canvas.getContext && canvas.getContext('2d');
-		let imgdata;
-		let i = -4;
-		let rgb = {r: 0,g: 0,b: 0};
-		let count = 0;
-		
-		if (!(context)) {
-			
-			return defaultRGB;
-			
-		}		try {
-			
-			imgdata = context.getImageData(0,0,canvas.width,canvas.height);
-		} catch (e) {
-			
-			// security error, img on diff domain */alert('x')
-			return defaultRGB;
-		}		
-		while ((i += blockSize * 4) < imgdata.data.length){
-			
-			++count;
-			rgb.r += imgdata.data[i];
-			rgb.g += imgdata.data[i + 1];
-			rgb.b += imgdata.data[i + 2];
-		}		
-		// ~~ used to floor values
-		rgb.r = ~~(rgb.r / count);
-		rgb.g = ~~(rgb.g / count);
-		rgb.b = ~~(rgb.b / count);
-		
-		return rgb;
-		
-		
-	}
-	render(){
-		var t$01, $c$0, $b$0, $d$0, $v$0;
-		
-		// renderImage()
-		t$01=this;
-		t$01.open$();
-		$c$0 = ($b$0=$d$0=1,t$01.$) || ($b$0=$d$0=0,t$01.$={});
-		($v$0=canvas,($v$0===$c$0.d&&$b$0) || ($c$0.d_ = t$01.insert$($c$0.d=$v$0,384,$c$0.d_)));
-		t$01.close$($d$0);
-		return t$01;
-	}
-} CroppedImage.init$(); imba.tags.define('cropped-image-e6wu0b',CroppedImage,{});
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
 
-imba.inlineStyles(".e6wu0bb:not(#_):not(#_) {display: block;}\n\n");
-/*
-.e6wu0bb:not(#_):not(#_) {display: block;}
+  return _typeof(obj);
+}
 
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
+/* eslint-disable no-bitwise, unicorn/prefer-query-selector */
+
+/**
+* StackBlur - a fast almost Gaussian Blur For Canvas
+*
+* In case you find this class useful - especially in commercial projects -
+* I am not totally unhappy for a small donation to my PayPal account
+* mario@quasimondo.de
+*
+* Or support me on flattr:
+* {@link https://flattr.com/thing/72791/StackBlur-a-fast-almost-Gaussian-Blur-Effect-for-CanvasJavascript}.
+*
+* @module StackBlur
+* @author Mario Klingemann
+* Contact: mario@quasimondo.com
+* Website: {@link http://www.quasimondo.com/StackBlurForCanvas/StackBlurDemo.html}
+* Twitter: @quasimondo
+*
+* @copyright (c) 2010 Mario Klingemann
+*
+* Permission is hereby granted, free of charge, to any person
+* obtaining a copy of this software and associated documentation
+* files (the "Software"), to deal in the Software without
+* restriction, including without limitation the rights to use,
+* copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the
+* Software is furnished to do so, subject to the following
+* conditions:
+*
+* The above copyright notice and this permission notice shall be
+* included in all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+* OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+* HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+* WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+* OTHER DEALINGS IN THE SOFTWARE.
 */
 
-var $1$1 = new WeakMap(), $2$1 = new WeakMap(), $t$0$1;
+/* eslint-disable max-len */
+var mulTable = [512, 512, 456, 512, 328, 456, 335, 512, 405, 328, 271, 456, 388, 335, 292, 512, 454, 405, 364, 328, 298, 271, 496, 456, 420, 388, 360, 335, 312, 292, 273, 512, 482, 454, 428, 405, 383, 364, 345, 328, 312, 298, 284, 271, 259, 496, 475, 456, 437, 420, 404, 388, 374, 360, 347, 335, 323, 312, 302, 292, 282, 273, 265, 512, 497, 482, 468, 454, 441, 428, 417, 405, 394, 383, 373, 364, 354, 345, 337, 328, 320, 312, 305, 298, 291, 284, 278, 271, 265, 259, 507, 496, 485, 475, 465, 456, 446, 437, 428, 420, 412, 404, 396, 388, 381, 374, 367, 360, 354, 347, 341, 335, 329, 323, 318, 312, 307, 302, 297, 292, 287, 282, 278, 273, 269, 265, 261, 512, 505, 497, 489, 482, 475, 468, 461, 454, 447, 441, 435, 428, 422, 417, 411, 405, 399, 394, 389, 383, 378, 373, 368, 364, 359, 354, 350, 345, 341, 337, 332, 328, 324, 320, 316, 312, 309, 305, 301, 298, 294, 291, 287, 284, 281, 278, 274, 271, 268, 265, 262, 259, 257, 507, 501, 496, 491, 485, 480, 475, 470, 465, 460, 456, 451, 446, 442, 437, 433, 428, 424, 420, 416, 412, 408, 404, 400, 396, 392, 388, 385, 381, 377, 374, 370, 367, 363, 360, 357, 354, 350, 347, 344, 341, 338, 335, 332, 329, 326, 323, 320, 318, 315, 312, 310, 307, 304, 302, 299, 297, 294, 292, 289, 287, 285, 282, 280, 278, 275, 273, 271, 269, 267, 265, 263, 261, 259];
+var shgTable = [9, 11, 12, 13, 13, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17, 17, 17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24];
+/* eslint-enable max-len */
 
-// Here we save crop information
+/**
+ * @param {string|HTMLImageElement} img
+ * @param {string|HTMLCanvasElement} canvas
+ * @param {Float} radius
+ * @param {boolean} blurAlphaChannel
+ * @returns {undefined}
+ */
+
+function processImage(img, canvas, radius, blurAlphaChannel) {
+  if (typeof img === 'string') {
+    img = document.getElementById(img);
+  }
+
+  if (!img || !('naturalWidth' in img)) {
+    return;
+  }
+
+  var w = img.naturalWidth;
+  var h = img.naturalHeight;
+
+  if (typeof canvas === 'string') {
+    canvas = document.getElementById(canvas);
+  }
+
+  if (!canvas || !('getContext' in canvas)) {
+    return;
+  }
+
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.width = w;
+  canvas.height = h;
+  var context = canvas.getContext('2d');
+  context.clearRect(0, 0, w, h);
+  context.drawImage(img, 0, 0);
+
+  if (isNaN(radius) || radius < 1) {
+    return;
+  }
+
+  if (blurAlphaChannel) {
+    processCanvasRGBA(canvas, 0, 0, w, h, radius);
+  } else {
+    processCanvasRGB(canvas, 0, 0, w, h, radius);
+  }
+}
+/**
+ * @param {string|HTMLCanvasElement} canvas
+ * @param {Integer} topX
+ * @param {Integer} topY
+ * @param {Integer} width
+ * @param {Integer} height
+ * @throws {Error|TypeError}
+ * @returns {ImageData} See {@link https://html.spec.whatwg.org/multipage/canvas.html#imagedata}
+ */
+
+
+function getImageDataFromCanvas(canvas, topX, topY, width, height) {
+  if (typeof canvas === 'string') {
+    canvas = document.getElementById(canvas);
+  }
+
+  if (!canvas || _typeof(canvas) !== 'object' || !('getContext' in canvas)) {
+    throw new TypeError('Expecting canvas with `getContext` method ' + 'in processCanvasRGB(A) calls!');
+  }
+
+  var context = canvas.getContext('2d');
+
+  try {
+    return context.getImageData(topX, topY, width, height);
+  } catch (e) {
+    throw new Error('unable to access image data: ' + e);
+  }
+}
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {Integer} topX
+ * @param {Integer} topY
+ * @param {Integer} width
+ * @param {Integer} height
+ * @param {Float} radius
+ * @returns {undefined}
+ */
+
+
+function processCanvasRGBA(canvas, topX, topY, width, height, radius) {
+  if (isNaN(radius) || radius < 1) {
+    return;
+  }
+
+  radius |= 0;
+  var imageData = getImageDataFromCanvas(canvas, topX, topY, width, height);
+  imageData = processImageDataRGBA(imageData, topX, topY, width, height, radius);
+  canvas.getContext('2d').putImageData(imageData, topX, topY);
+}
+/**
+ * @param {ImageData} imageData
+ * @param {Integer} topX
+ * @param {Integer} topY
+ * @param {Integer} width
+ * @param {Integer} height
+ * @param {Float} radius
+ * @returns {ImageData}
+ */
+
+
+function processImageDataRGBA(imageData, topX, topY, width, height, radius) {
+  var pixels = imageData.data;
+  var x, y, i, p, yp, yi, yw, rSum, gSum, bSum, aSum, rOutSum, gOutSum, bOutSum, aOutSum, rInSum, gInSum, bInSum, aInSum, pr, pg, pb, pa, rbs;
+  var div = 2 * radius + 1; // const w4 = width << 2;
+
+  var widthMinus1 = width - 1;
+  var heightMinus1 = height - 1;
+  var radiusPlus1 = radius + 1;
+  var sumFactor = radiusPlus1 * (radiusPlus1 + 1) / 2;
+  var stackStart = new BlurStack();
+  var stack = stackStart;
+  var stackEnd;
+
+  for (i = 1; i < div; i++) {
+    stack = stack.next = new BlurStack();
+
+    if (i === radiusPlus1) {
+      stackEnd = stack;
+    }
+  }
+
+  stack.next = stackStart;
+  var stackIn = null;
+  var stackOut = null;
+  yw = yi = 0;
+  var mulSum = mulTable[radius];
+  var shgSum = shgTable[radius];
+
+  for (y = 0; y < height; y++) {
+    rInSum = gInSum = bInSum = aInSum = rSum = gSum = bSum = aSum = 0;
+    rOutSum = radiusPlus1 * (pr = pixels[yi]);
+    gOutSum = radiusPlus1 * (pg = pixels[yi + 1]);
+    bOutSum = radiusPlus1 * (pb = pixels[yi + 2]);
+    aOutSum = radiusPlus1 * (pa = pixels[yi + 3]);
+    rSum += sumFactor * pr;
+    gSum += sumFactor * pg;
+    bSum += sumFactor * pb;
+    aSum += sumFactor * pa;
+    stack = stackStart;
+
+    for (i = 0; i < radiusPlus1; i++) {
+      stack.r = pr;
+      stack.g = pg;
+      stack.b = pb;
+      stack.a = pa;
+      stack = stack.next;
+    }
+
+    for (i = 1; i < radiusPlus1; i++) {
+      p = yi + ((widthMinus1 < i ? widthMinus1 : i) << 2);
+      rSum += (stack.r = pr = pixels[p]) * (rbs = radiusPlus1 - i);
+      gSum += (stack.g = pg = pixels[p + 1]) * rbs;
+      bSum += (stack.b = pb = pixels[p + 2]) * rbs;
+      aSum += (stack.a = pa = pixels[p + 3]) * rbs;
+      rInSum += pr;
+      gInSum += pg;
+      bInSum += pb;
+      aInSum += pa;
+      stack = stack.next;
+    }
+
+    stackIn = stackStart;
+    stackOut = stackEnd;
+
+    for (x = 0; x < width; x++) {
+      pixels[yi + 3] = pa = aSum * mulSum >> shgSum;
+
+      if (pa !== 0) {
+        pa = 255 / pa;
+        pixels[yi] = (rSum * mulSum >> shgSum) * pa;
+        pixels[yi + 1] = (gSum * mulSum >> shgSum) * pa;
+        pixels[yi + 2] = (bSum * mulSum >> shgSum) * pa;
+      } else {
+        pixels[yi] = pixels[yi + 1] = pixels[yi + 2] = 0;
+      }
+
+      rSum -= rOutSum;
+      gSum -= gOutSum;
+      bSum -= bOutSum;
+      aSum -= aOutSum;
+      rOutSum -= stackIn.r;
+      gOutSum -= stackIn.g;
+      bOutSum -= stackIn.b;
+      aOutSum -= stackIn.a;
+      p = yw + ((p = x + radius + 1) < widthMinus1 ? p : widthMinus1) << 2;
+      rInSum += stackIn.r = pixels[p];
+      gInSum += stackIn.g = pixels[p + 1];
+      bInSum += stackIn.b = pixels[p + 2];
+      aInSum += stackIn.a = pixels[p + 3];
+      rSum += rInSum;
+      gSum += gInSum;
+      bSum += bInSum;
+      aSum += aInSum;
+      stackIn = stackIn.next;
+      rOutSum += pr = stackOut.r;
+      gOutSum += pg = stackOut.g;
+      bOutSum += pb = stackOut.b;
+      aOutSum += pa = stackOut.a;
+      rInSum -= pr;
+      gInSum -= pg;
+      bInSum -= pb;
+      aInSum -= pa;
+      stackOut = stackOut.next;
+      yi += 4;
+    }
+
+    yw += width;
+  }
+
+  for (x = 0; x < width; x++) {
+    gInSum = bInSum = aInSum = rInSum = gSum = bSum = aSum = rSum = 0;
+    yi = x << 2;
+    rOutSum = radiusPlus1 * (pr = pixels[yi]);
+    gOutSum = radiusPlus1 * (pg = pixels[yi + 1]);
+    bOutSum = radiusPlus1 * (pb = pixels[yi + 2]);
+    aOutSum = radiusPlus1 * (pa = pixels[yi + 3]);
+    rSum += sumFactor * pr;
+    gSum += sumFactor * pg;
+    bSum += sumFactor * pb;
+    aSum += sumFactor * pa;
+    stack = stackStart;
+
+    for (i = 0; i < radiusPlus1; i++) {
+      stack.r = pr;
+      stack.g = pg;
+      stack.b = pb;
+      stack.a = pa;
+      stack = stack.next;
+    }
+
+    yp = width;
+
+    for (i = 1; i <= radius; i++) {
+      yi = yp + x << 2;
+      rSum += (stack.r = pr = pixels[yi]) * (rbs = radiusPlus1 - i);
+      gSum += (stack.g = pg = pixels[yi + 1]) * rbs;
+      bSum += (stack.b = pb = pixels[yi + 2]) * rbs;
+      aSum += (stack.a = pa = pixels[yi + 3]) * rbs;
+      rInSum += pr;
+      gInSum += pg;
+      bInSum += pb;
+      aInSum += pa;
+      stack = stack.next;
+
+      if (i < heightMinus1) {
+        yp += width;
+      }
+    }
+
+    yi = x;
+    stackIn = stackStart;
+    stackOut = stackEnd;
+
+    for (y = 0; y < height; y++) {
+      p = yi << 2;
+      pixels[p + 3] = pa = aSum * mulSum >> shgSum;
+
+      if (pa > 0) {
+        pa = 255 / pa;
+        pixels[p] = (rSum * mulSum >> shgSum) * pa;
+        pixels[p + 1] = (gSum * mulSum >> shgSum) * pa;
+        pixels[p + 2] = (bSum * mulSum >> shgSum) * pa;
+      } else {
+        pixels[p] = pixels[p + 1] = pixels[p + 2] = 0;
+      }
+
+      rSum -= rOutSum;
+      gSum -= gOutSum;
+      bSum -= bOutSum;
+      aSum -= aOutSum;
+      rOutSum -= stackIn.r;
+      gOutSum -= stackIn.g;
+      bOutSum -= stackIn.b;
+      aOutSum -= stackIn.a;
+      p = x + ((p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1) * width << 2;
+      rSum += rInSum += stackIn.r = pixels[p];
+      gSum += gInSum += stackIn.g = pixels[p + 1];
+      bSum += bInSum += stackIn.b = pixels[p + 2];
+      aSum += aInSum += stackIn.a = pixels[p + 3];
+      stackIn = stackIn.next;
+      rOutSum += pr = stackOut.r;
+      gOutSum += pg = stackOut.g;
+      bOutSum += pb = stackOut.b;
+      aOutSum += pa = stackOut.a;
+      rInSum -= pr;
+      gInSum -= pg;
+      bInSum -= pb;
+      aInSum -= pa;
+      stackOut = stackOut.next;
+      yi += width;
+    }
+  }
+
+  return imageData;
+}
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {Integer} topX
+ * @param {Integer} topY
+ * @param {Integer} width
+ * @param {Integer} height
+ * @param {Float} radius
+ * @returns {undefined}
+ */
+
+
+function processCanvasRGB(canvas, topX, topY, width, height, radius) {
+  if (isNaN(radius) || radius < 1) {
+    return;
+  }
+
+  radius |= 0;
+  var imageData = getImageDataFromCanvas(canvas, topX, topY, width, height);
+  imageData = processImageDataRGB(imageData, topX, topY, width, height, radius);
+  canvas.getContext('2d').putImageData(imageData, topX, topY);
+}
+/**
+ * @param {ImageData} imageData
+ * @param {Integer} topX
+ * @param {Integer} topY
+ * @param {Integer} width
+ * @param {Integer} height
+ * @param {Float} radius
+ * @returns {ImageData}
+ */
+
+
+function processImageDataRGB(imageData, topX, topY, width, height, radius) {
+  var pixels = imageData.data;
+  var x, y, i, p, yp, yi, yw, rSum, gSum, bSum, rOutSum, gOutSum, bOutSum, rInSum, gInSum, bInSum, pr, pg, pb, rbs;
+  var div = 2 * radius + 1; // const w4 = width << 2;
+
+  var widthMinus1 = width - 1;
+  var heightMinus1 = height - 1;
+  var radiusPlus1 = radius + 1;
+  var sumFactor = radiusPlus1 * (radiusPlus1 + 1) / 2;
+  var stackStart = new BlurStack();
+  var stack = stackStart;
+  var stackEnd;
+
+  for (i = 1; i < div; i++) {
+    stack = stack.next = new BlurStack();
+
+    if (i === radiusPlus1) {
+      stackEnd = stack;
+    }
+  }
+
+  stack.next = stackStart;
+  var stackIn = null;
+  var stackOut = null;
+  yw = yi = 0;
+  var mulSum = mulTable[radius];
+  var shgSum = shgTable[radius];
+
+  for (y = 0; y < height; y++) {
+    rInSum = gInSum = bInSum = rSum = gSum = bSum = 0;
+    rOutSum = radiusPlus1 * (pr = pixels[yi]);
+    gOutSum = radiusPlus1 * (pg = pixels[yi + 1]);
+    bOutSum = radiusPlus1 * (pb = pixels[yi + 2]);
+    rSum += sumFactor * pr;
+    gSum += sumFactor * pg;
+    bSum += sumFactor * pb;
+    stack = stackStart;
+
+    for (i = 0; i < radiusPlus1; i++) {
+      stack.r = pr;
+      stack.g = pg;
+      stack.b = pb;
+      stack = stack.next;
+    }
+
+    for (i = 1; i < radiusPlus1; i++) {
+      p = yi + ((widthMinus1 < i ? widthMinus1 : i) << 2);
+      rSum += (stack.r = pr = pixels[p]) * (rbs = radiusPlus1 - i);
+      gSum += (stack.g = pg = pixels[p + 1]) * rbs;
+      bSum += (stack.b = pb = pixels[p + 2]) * rbs;
+      rInSum += pr;
+      gInSum += pg;
+      bInSum += pb;
+      stack = stack.next;
+    }
+
+    stackIn = stackStart;
+    stackOut = stackEnd;
+
+    for (x = 0; x < width; x++) {
+      pixels[yi] = rSum * mulSum >> shgSum;
+      pixels[yi + 1] = gSum * mulSum >> shgSum;
+      pixels[yi + 2] = bSum * mulSum >> shgSum;
+      rSum -= rOutSum;
+      gSum -= gOutSum;
+      bSum -= bOutSum;
+      rOutSum -= stackIn.r;
+      gOutSum -= stackIn.g;
+      bOutSum -= stackIn.b;
+      p = yw + ((p = x + radius + 1) < widthMinus1 ? p : widthMinus1) << 2;
+      rInSum += stackIn.r = pixels[p];
+      gInSum += stackIn.g = pixels[p + 1];
+      bInSum += stackIn.b = pixels[p + 2];
+      rSum += rInSum;
+      gSum += gInSum;
+      bSum += bInSum;
+      stackIn = stackIn.next;
+      rOutSum += pr = stackOut.r;
+      gOutSum += pg = stackOut.g;
+      bOutSum += pb = stackOut.b;
+      rInSum -= pr;
+      gInSum -= pg;
+      bInSum -= pb;
+      stackOut = stackOut.next;
+      yi += 4;
+    }
+
+    yw += width;
+  }
+
+  for (x = 0; x < width; x++) {
+    gInSum = bInSum = rInSum = gSum = bSum = rSum = 0;
+    yi = x << 2;
+    rOutSum = radiusPlus1 * (pr = pixels[yi]);
+    gOutSum = radiusPlus1 * (pg = pixels[yi + 1]);
+    bOutSum = radiusPlus1 * (pb = pixels[yi + 2]);
+    rSum += sumFactor * pr;
+    gSum += sumFactor * pg;
+    bSum += sumFactor * pb;
+    stack = stackStart;
+
+    for (i = 0; i < radiusPlus1; i++) {
+      stack.r = pr;
+      stack.g = pg;
+      stack.b = pb;
+      stack = stack.next;
+    }
+
+    yp = width;
+
+    for (i = 1; i <= radius; i++) {
+      yi = yp + x << 2;
+      rSum += (stack.r = pr = pixels[yi]) * (rbs = radiusPlus1 - i);
+      gSum += (stack.g = pg = pixels[yi + 1]) * rbs;
+      bSum += (stack.b = pb = pixels[yi + 2]) * rbs;
+      rInSum += pr;
+      gInSum += pg;
+      bInSum += pb;
+      stack = stack.next;
+
+      if (i < heightMinus1) {
+        yp += width;
+      }
+    }
+
+    yi = x;
+    stackIn = stackStart;
+    stackOut = stackEnd;
+
+    for (y = 0; y < height; y++) {
+      p = yi << 2;
+      pixels[p] = rSum * mulSum >> shgSum;
+      pixels[p + 1] = gSum * mulSum >> shgSum;
+      pixels[p + 2] = bSum * mulSum >> shgSum;
+      rSum -= rOutSum;
+      gSum -= gOutSum;
+      bSum -= bOutSum;
+      rOutSum -= stackIn.r;
+      gOutSum -= stackIn.g;
+      bOutSum -= stackIn.b;
+      p = x + ((p = y + radiusPlus1) < heightMinus1 ? p : heightMinus1) * width << 2;
+      rSum += rInSum += stackIn.r = pixels[p];
+      gSum += gInSum += stackIn.g = pixels[p + 1];
+      bSum += bInSum += stackIn.b = pixels[p + 2];
+      stackIn = stackIn.next;
+      rOutSum += pr = stackOut.r;
+      gOutSum += pg = stackOut.g;
+      bOutSum += pb = stackOut.b;
+      rInSum -= pr;
+      gInSum -= pg;
+      bInSum -= pb;
+      stackOut = stackOut.next;
+      yi += width;
+    }
+  }
+
+  return imageData;
+}
+/**
+ *
+ */
+
+
+var BlurStack =
+/**
+ * Set properties.
+ */
+function BlurStack() {
+  _classCallCheck(this, BlurStack);
+
+  this.r = 0;
+  this.g = 0;
+  this.b = 0;
+  this.a = 0;
+  this.next = null;
+};
+
+var $1 = new WeakMap(), $2 = new WeakMap(), $3 = new WeakMap();
+/*
+This tag is a box with resizers and gragggers
+to measure borders for resizing image or text &c
+*/
+
+
 let crop = {
 	left: 0,
 	top: 0,
@@ -2718,10 +3109,7 @@ let bcrop = {
 	height: 0
 };
 
-let canvas$1 = (($t$0$1=imba.createElement('canvas',null,'f0vwtmb',null)),
-$t$0$1);
-
-class CropImage extends imba.tags.get('component','ImbaElement') {
+class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 	static init$(){
 		
 		return this;
@@ -2731,34 +3119,32 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	}
 	
 	set width(value) {
-		$1$1.set(this,value);
+		$1.set(this,value);
 	}
 	get width() {
-		return $1$1.get(this);
+		return $1.get(this);
 	}
 	set height(value) {
-		$2$1.set(this,value);
+		$2.set(this,value);
 	}
 	get height() {
-		return $2$1.get(this);
+		return $2.get(this);
+	}
+	set text_resizing(value) {
+		$3.set(this,value);
+	}
+	get text_resizing() {
+		return $3.has(this) ? $3.get(this) : false;
 	}
 	
 	mount(){
 		
-		[this.width,this.height] = this.data.getSize(this.data.uploaded_image.width,this.data.uploaded_image.height);
-		
-		crop.width = this.width;
-		crop.height = this.height;
-		crop.left = 0;
-		crop.top = 0;
-		this.backUpCrop();
-		
-		canvas$1.width = this.width;
-		canvas$1.height = this.height;
-		canvas$1.imageSmoothingQuality = 'high';
-		canvas$1.getContext('2d').clearRect(0,0,canvas$1.width,canvas$1.height);
-		canvas$1.getContext('2d').drawImage(this.data.uploaded_image,0,0,this.width,this.height);
-		return imba.commit();
+		console.log(this.data);
+		crop = this.data.crop;
+		this.width = this.data.width;
+		this.height = this.data.height;
+		this.text_resizing = this.data.text_resizing || this.data.text_resizing;
+		return this.backUpCrop();
 	}
 	
 	backUpCrop(){
@@ -2808,7 +3194,6 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 			crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
 			return crop.left = bcrop.left + (bcrop.width - crop.width);
 		}	}
-	
 	
 	moveS(e){
 		
@@ -2964,6 +3349,528 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 					return crop.left = 0;
 				}			}		}	}
 	
+	render(){
+		var self = this, $bg$0$2, $bg$1$2, $bg$2$2, $bg$3$2, $bg$4$2, $bg$5$2, $bg$6$2, $bg$7$2, $t$0, $c$0, $b$0, $d$0, $v$0, $t$1, $v$1, $b$3, $d$3, $v$3, $t$2, $b$2, $d$2, $v$2;
+		
+		$t$0=this;
+		$t$0.open$();
+		$c$0 = ($b$0=$d$0=1,$t$0.$) || ($b$0=$d$0=0,$t$0.$={});
+		($v$0=this.text_resizing ? 0 : 1,$v$0===$c$0.bh || ($t$0.css$var('--vhmu9bc',$c$0.bh=$v$0,null,'o')));
+		((!$b$0||$d$0&2) && $t$0.flagSelf$('vhmu9bb'));
+		$t$1 = ($c$0.bi) || ($c$0.bi=$t$1=imba.createElement('div',$t$0,'vhmu9bf',null));
+		($v$1=this.width,$v$1===$c$0.bj || ($t$1.css$var('--vhmu9bg',$c$0.bj=$v$1,'px','w')));
+		($v$1=this.height,$v$1===$c$0.bk || ($t$1.css$var('--vhmu9bh',$c$0.bk=$v$1,'px','h')));
+		($v$1=crop.left,$v$1===$c$0.bl || ($t$1.css$var('--vhmu9bi',$c$0.bl=$v$1,'px','clip-path')));
+		($v$1=crop.top + crop.height,$v$1===$c$0.bm || ($t$1.css$var('--vhmu9bj',$c$0.bm=$v$1,'px','clip-path')));
+		($v$1=crop.left,$v$1===$c$0.bn || ($t$1.css$var('--vhmu9bk',$c$0.bn=$v$1,'px','clip-path')));
+		($v$1=crop.top,$v$1===$c$0.bo || ($t$1.css$var('--vhmu9bl',$c$0.bo=$v$1,'px','clip-path')));
+		($v$1=crop.left + crop.width,$v$1===$c$0.bp || ($t$1.css$var('--vhmu9bm',$c$0.bp=$v$1,'px','clip-path')));
+		($v$1=crop.top,$v$1===$c$0.bq || ($t$1.css$var('--vhmu9bn',$c$0.bq=$v$1,'px','clip-path')));
+		($v$1=crop.left + crop.width,$v$1===$c$0.br || ($t$1.css$var('--vhmu9bo',$c$0.br=$v$1,'px','clip-path')));
+		($v$1=crop.top + crop.height,$v$1===$c$0.bs || ($t$1.css$var('--vhmu9bp',$c$0.bs=$v$1,'px','clip-path')));
+		($v$1=crop.left,$v$1===$c$0.bt || ($t$1.css$var('--vhmu9bq',$c$0.bt=$v$1,'px','clip-path')));
+		($v$1=crop.top + crop.height,$v$1===$c$0.bu || ($t$1.css$var('--vhmu9br',$c$0.bu=$v$1,'px','clip-path')));
+		$t$1 = ($c$0.bv) || ($c$0.bv=$t$1=imba.createElement('div',$t$0,'vhmu9bs',null));
+		($v$1=this.width,$v$1===$c$0.bw || ($t$1.css$var('--vhmu9bt',$c$0.bw=$v$1,'px','w')));
+		($v$1=this.height,$v$1===$c$0.bx || ($t$1.css$var('--vhmu9bu',$c$0.bx=$v$1,'px','h')));
+		$bg$0$2 = $bg$1$2 = $bg$2$2 = $bg$3$2 = $bg$4$2 = $bg$5$2 = $bg$6$2 = $bg$7$2 = null;if (!(this.text_resizing)) {
+			
+			// Side resizers
+			$bg$0$2 = ($b$3=$d$3=1,$c$0.by) || ($b$3=$d$3=0,$c$0.by=$bg$0$2=imba.createElement('div',null,'vhmu9bv dragger',null));
+			$b$3||($bg$0$2.up$=$t$1);
+			($v$3=crop.top - 8,$v$3===$c$0.bz || ($bg$0$2.css$var('--vhmu9bw',$c$0.bz=$v$3,'px','t')));
+			($v$3=crop.left + (crop.width) / 2 - 8,$v$3===$c$0.ca || ($bg$0$2.css$var('--vhmu9bx',$c$0.ca=$v$3,'px','l')));
+			$b$3 || ($bg$0$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragN(e);
+			}]},this));
+			$bg$1$2 = ($b$3=$d$3=1,$c$0.cb) || ($b$3=$d$3=0,$c$0.cb=$bg$1$2=imba.createElement('div',null,'vhmu9by dragger',null));
+			$b$3||($bg$1$2.up$=$t$1);
+			($v$3=crop.top + (crop.height) / 2 - 8,$v$3===$c$0.cc || ($bg$1$2.css$var('--vhmu9bz',$c$0.cc=$v$3,'px','t')));
+			($v$3=crop.left + crop.width - 8,$v$3===$c$0.cd || ($bg$1$2.css$var('--vhmu9baa',$c$0.cd=$v$3,'px','l')));
+			$b$3 || ($bg$1$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragE(e);
+			}]},this));
+			$bg$2$2 = ($b$3=$d$3=1,$c$0.ce) || ($b$3=$d$3=0,$c$0.ce=$bg$2$2=imba.createElement('div',null,'vhmu9bab dragger',null));
+			$b$3||($bg$2$2.up$=$t$1);
+			($v$3=crop.top + crop.height - 8,$v$3===$c$0.cf || ($bg$2$2.css$var('--vhmu9bac',$c$0.cf=$v$3,'px','t')));
+			($v$3=crop.left + (crop.width) / 2 - 8,$v$3===$c$0.cg || ($bg$2$2.css$var('--vhmu9bad',$c$0.cg=$v$3,'px','l')));
+			$b$3 || ($bg$2$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragS(e);
+			}]},this));
+			$bg$3$2 = ($b$3=$d$3=1,$c$0.ch) || ($b$3=$d$3=0,$c$0.ch=$bg$3$2=imba.createElement('div',null,'vhmu9bae dragger',null));
+			$b$3||($bg$3$2.up$=$t$1);
+			($v$3=crop.top + (crop.height) / 2 - 8,$v$3===$c$0.ci || ($bg$3$2.css$var('--vhmu9baf',$c$0.ci=$v$3,'px','t')));
+			($v$3=crop.left - 8,$v$3===$c$0.cj || ($bg$3$2.css$var('--vhmu9bag',$c$0.cj=$v$3,'px','l')));
+			$b$3 || ($bg$3$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragW(e);
+			}]},this));
+			
+			// Corner resizers
+			$bg$4$2 = ($b$3=$d$3=1,$c$0.ck) || ($b$3=$d$3=0,$c$0.ck=$bg$4$2=imba.createElement('div',null,'vhmu9bah dragger',null));
+			$b$3||($bg$4$2.up$=$t$1);
+			($v$3=crop.top - 8,$v$3===$c$0.cl || ($bg$4$2.css$var('--vhmu9bai',$c$0.cl=$v$3,'px','t')));
+			($v$3=crop.left - 8,$v$3===$c$0.cm || ($bg$4$2.css$var('--vhmu9baj',$c$0.cm=$v$3,'px','l')));
+			$b$3 || ($bg$4$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragNW(e);
+			}]},this));
+			$bg$5$2 = ($b$3=$d$3=1,$c$0.cn) || ($b$3=$d$3=0,$c$0.cn=$bg$5$2=imba.createElement('div',null,'vhmu9bak dragger',null));
+			$b$3||($bg$5$2.up$=$t$1);
+			($v$3=crop.top - 8,$v$3===$c$0.co || ($bg$5$2.css$var('--vhmu9bal',$c$0.co=$v$3,'px','t')));
+			($v$3=crop.left + crop.width - 8,$v$3===$c$0.cp || ($bg$5$2.css$var('--vhmu9bam',$c$0.cp=$v$3,'px','l')));
+			$b$3 || ($bg$5$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragNE(e);
+			}]},this));
+			$bg$6$2 = ($b$3=$d$3=1,$c$0.cq) || ($b$3=$d$3=0,$c$0.cq=$bg$6$2=imba.createElement('div',null,'vhmu9ban dragger',null));
+			$b$3||($bg$6$2.up$=$t$1);
+			($v$3=crop.top + crop.height - 8,$v$3===$c$0.cr || ($bg$6$2.css$var('--vhmu9bao',$c$0.cr=$v$3,'px','t')));
+			($v$3=crop.left + crop.width - 8,$v$3===$c$0.cs || ($bg$6$2.css$var('--vhmu9bap',$c$0.cs=$v$3,'px','l')));
+			$b$3 || ($bg$6$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragSE(e);
+			}]},this));
+			$bg$7$2 = ($b$3=$d$3=1,$c$0.ct) || ($b$3=$d$3=0,$c$0.ct=$bg$7$2=imba.createElement('div',null,'vhmu9baq dragger',null));
+			$b$3||($bg$7$2.up$=$t$1);
+			($v$3=crop.top + crop.height - 8,$v$3===$c$0.cu || ($bg$7$2.css$var('--vhmu9bar',$c$0.cu=$v$3,'px','t')));
+			($v$3=crop.left - 8,$v$3===$c$0.cv || ($bg$7$2.css$var('--vhmu9bas',$c$0.cv=$v$3,'px','l')));
+			$b$3 || ($bg$7$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragSW(e);
+			}]},this));
+		} else {
+			
+			$bg$0$2 = ($b$3=$d$3=1,$c$0.cw) || ($b$3=$d$3=0,$c$0.cw=$bg$0$2=imba.createElement('div',null,'vhmu9bat dragger',null));
+			$b$3||($bg$0$2.up$=$t$1);
+			($v$3=this.height,$v$3===$c$0.cx || ($bg$0$2.css$var('--vhmu9bau',$c$0.cx=$v$3,'px','h')));
+			($v$3=crop.top,$v$3===$c$0.cy || ($bg$0$2.css$var('--vhmu9bav',$c$0.cy=$v$3,'px','t')));
+			($v$3=crop.left + crop.width - 8,$v$3===$c$0.cz || ($bg$0$2.css$var('--vhmu9baw',$c$0.cz=$v$3,'px','l')));
+			$b$3 || ($bg$0$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragE(e);
+			}]},this));
+			$bg$1$2 = ($b$3=$d$3=1,$c$0.da) || ($b$3=$d$3=0,$c$0.da=$bg$1$2=imba.createElement('div',null,'vhmu9bax dragger',null));
+			$b$3||($bg$1$2.up$=$t$1);
+			($v$3=this.height,$v$3===$c$0.db || ($bg$1$2.css$var('--vhmu9bay',$c$0.db=$v$3,'px','h')));
+			($v$3=crop.top,$v$3===$c$0.dc || ($bg$1$2.css$var('--vhmu9baz',$c$0.dc=$v$3,'px','t')));
+			($v$3=crop.left - 8,$v$3===$c$0.dd || ($bg$1$2.css$var('--vhmu9bba',$c$0.dd=$v$3,'px','l')));
+			$b$3 || ($bg$1$2.on$(`touch`,{$_: [function(e,$) {
+				return self.dragW(e);
+			}]},this));
+			
+		}
+		($c$0.$bg$0$2_ = $t$1.insert$($bg$0$2,0,$c$0.$bg$0$2_));
+		($c$0.$bg$1$2_ = $t$1.insert$($bg$1$2,0,$c$0.$bg$1$2_));
+		($c$0.$bg$2$2_ = $t$1.insert$($bg$2$2,0,$c$0.$bg$2$2_));
+		($c$0.$bg$3$2_ = $t$1.insert$($bg$3$2,0,$c$0.$bg$3$2_));
+		($c$0.$bg$4$2_ = $t$1.insert$($bg$4$2,0,$c$0.$bg$4$2_));
+		($c$0.$bg$5$2_ = $t$1.insert$($bg$5$2,0,$c$0.$bg$5$2_));
+		($c$0.$bg$6$2_ = $t$1.insert$($bg$6$2,0,$c$0.$bg$6$2_));
+		($c$0.$bg$7$2_ = $t$1.insert$($bg$7$2,0,$c$0.$bg$7$2_));		$t$2 = ($b$2=$d$2=1,$c$0.de) || ($b$2=$d$2=0,$c$0.de=$t$2=imba.createElement('div',$t$1,'vhmu9bbb',null));
+		($v$2=crop.top,$v$2===$c$0.df || ($t$2.css$var('--vhmu9bbc',$c$0.df=$v$2,'px','t')));
+		($v$2=crop.left,$v$2===$c$0.dg || ($t$2.css$var('--vhmu9bbd',$c$0.dg=$v$2,'px','l')));
+		($v$2=crop.width,$v$2===$c$0.dh || ($t$2.css$var('--vhmu9bbe',$c$0.dh=$v$2,'px','w')));
+		($v$2=crop.height,$v$2===$c$0.di || ($t$2.css$var('--vhmu9bbf',$c$0.di=$v$2,'px','h')));
+		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
+			return self.dragCropArea(e);
+		}]},this));
+		$t$0.close$($d$0);
+		return $t$0;
+	}
+	
+	
+	
+	
+} MeasuringBox.init$(); imba.tags.define('measuring-box-vhmu9b',MeasuringBox,{});
+
+imba.inlineStyles(".vhmu9bb:not(#_):not(#_) {position: absolute;\ntop: 0rem;\nleft: 0rem;\ndisplay: block;\noverflow: visible;\nbackground: hsla(201.00,100.00%,96.08%,100%);\nopacity: var(--vhmu9bc);}\n.vhmu9bb:not(#_):not(#_):hover {opacity: 1;}\n\n.vhmu9bf:not(#_):not(#_) {position: absolute;\ndisplay: block;\nleft: 0rem;\ntop: 0rem;\nwidth: var(--vhmu9bg);\nheight: var(--vhmu9bh);\nbackground: rgba(0, 0, 0, 0.5);\nclip-path: polygon(0% 0%, 0% 100%, var(--vhmu9bi) var(--vhmu9bj), var(--vhmu9bk) var(--vhmu9bl), var(--vhmu9bm) var(--vhmu9bn), var(--vhmu9bo) var(--vhmu9bp), var(--vhmu9bq) var(--vhmu9br), 0% 100%, 100% 100%, 100% 0%);}\n\n.vhmu9bs:not(#_):not(#_) {position: absolute;\ndisplay: block;\nleft: 0rem;\ntop: 0rem;\nwidth: var(--vhmu9bt);\nheight: var(--vhmu9bu);}\n\n.vhmu9bv:not(#_):not(#_) {top: var(--vhmu9bw);\nleft: var(--vhmu9bx);\ncursor: ns-resize;}\n\n.vhmu9by:not(#_):not(#_) {top: var(--vhmu9bz);\nleft: var(--vhmu9baa);\ncursor: ew-resize;}\n\n.vhmu9bab:not(#_):not(#_) {top: var(--vhmu9bac);\nleft: var(--vhmu9bad);\ncursor: ns-resize;}\n\n.vhmu9bae:not(#_):not(#_) {top: var(--vhmu9baf);\nleft: var(--vhmu9bag);\ncursor: ew-resize;}\n\n.vhmu9bah:not(#_):not(#_) {top: var(--vhmu9bai);\nleft: var(--vhmu9baj);\ncursor: nwse-resize;}\n\n.vhmu9bak:not(#_):not(#_) {top: var(--vhmu9bal);\nleft: var(--vhmu9bam);\ncursor: nesw-resize;}\n\n.vhmu9ban:not(#_):not(#_) {top: var(--vhmu9bao);\nleft: var(--vhmu9bap);\ncursor: nwse-resize;}\n\n.vhmu9baq:not(#_):not(#_) {top: var(--vhmu9bar);\nleft: var(--vhmu9bas);\ncursor: nesw-resize;}\n\n.vhmu9bat:not(#_):not(#_) {height: var(--vhmu9bau);\ntop: var(--vhmu9bav);\nleft: var(--vhmu9baw);\ncursor: ew-resize;}\n\n.vhmu9bax:not(#_):not(#_) {height: var(--vhmu9bay);\ntop: var(--vhmu9baz);\nleft: var(--vhmu9bba);\ncursor: ew-resize;}\n\n.vhmu9bbb:not(#_):not(#_) {position: absolute;\ntop: var(--vhmu9bbc);\nleft: var(--vhmu9bbd);\nwidth: var(--vhmu9bbe);\nheight: var(--vhmu9bbf);\ncursor: move;}\n\nmeasuring-box-vhmu9b:not(#_) {transition: all 300ms ease 0s;}\n\nmeasuring-box-vhmu9b .dragger:not(#_) {position: absolute;\nwidth: 16px;\nheight: 16px;\nbackground: rgba(192, 192, 192, 0.5);\nz-index: 3;}\n\n");
+/*
+.vhmu9bb:not(#_):not(#_) {position: absolute;
+top: 0rem;
+left: 0rem;
+display: block;
+overflow: visible;
+background: hsla(201.00,100.00%,96.08%,100%);
+opacity: var(--vhmu9bc);}
+.vhmu9bb:not(#_):not(#_):hover {opacity: 1;}
+
+.vhmu9bf:not(#_):not(#_) {position: absolute;
+display: block;
+left: 0rem;
+top: 0rem;
+width: var(--vhmu9bg);
+height: var(--vhmu9bh);
+background: rgba(0, 0, 0, 0.5);
+clip-path: polygon(0% 0%, 0% 100%, var(--vhmu9bi) var(--vhmu9bj), var(--vhmu9bk) var(--vhmu9bl), var(--vhmu9bm) var(--vhmu9bn), var(--vhmu9bo) var(--vhmu9bp), var(--vhmu9bq) var(--vhmu9br), 0% 100%, 100% 100%, 100% 0%);}
+
+.vhmu9bs:not(#_):not(#_) {position: absolute;
+display: block;
+left: 0rem;
+top: 0rem;
+width: var(--vhmu9bt);
+height: var(--vhmu9bu);}
+
+.vhmu9bv:not(#_):not(#_) {top: var(--vhmu9bw);
+left: var(--vhmu9bx);
+cursor: ns-resize;}
+
+.vhmu9by:not(#_):not(#_) {top: var(--vhmu9bz);
+left: var(--vhmu9baa);
+cursor: ew-resize;}
+
+.vhmu9bab:not(#_):not(#_) {top: var(--vhmu9bac);
+left: var(--vhmu9bad);
+cursor: ns-resize;}
+
+.vhmu9bae:not(#_):not(#_) {top: var(--vhmu9baf);
+left: var(--vhmu9bag);
+cursor: ew-resize;}
+
+.vhmu9bah:not(#_):not(#_) {top: var(--vhmu9bai);
+left: var(--vhmu9baj);
+cursor: nwse-resize;}
+
+.vhmu9bak:not(#_):not(#_) {top: var(--vhmu9bal);
+left: var(--vhmu9bam);
+cursor: nesw-resize;}
+
+.vhmu9ban:not(#_):not(#_) {top: var(--vhmu9bao);
+left: var(--vhmu9bap);
+cursor: nwse-resize;}
+
+.vhmu9baq:not(#_):not(#_) {top: var(--vhmu9bar);
+left: var(--vhmu9bas);
+cursor: nesw-resize;}
+
+.vhmu9bat:not(#_):not(#_) {height: var(--vhmu9bau);
+top: var(--vhmu9bav);
+left: var(--vhmu9baw);
+cursor: ew-resize;}
+
+.vhmu9bax:not(#_):not(#_) {height: var(--vhmu9bay);
+top: var(--vhmu9baz);
+left: var(--vhmu9bba);
+cursor: ew-resize;}
+
+.vhmu9bbb:not(#_):not(#_) {position: absolute;
+top: var(--vhmu9bbc);
+left: var(--vhmu9bbd);
+width: var(--vhmu9bbe);
+height: var(--vhmu9bbf);
+cursor: move;}
+
+measuring-box-vhmu9b:not(#_) {transition: all 300ms ease 0s;}
+
+measuring-box-vhmu9b .dragger:not(#_) {position: absolute;
+width: 16px;
+height: 16px;
+background: rgba(192, 192, 192, 0.5);
+z-index: 3;}
+
+
+*/
+
+function iter$$4(a){ return a ? (a.toIterable ? a.toIterable() : a) : []; }var $1$1 = new WeakMap(), $2$1 = new WeakMap(), $3$1 = new WeakMap(), $4 = new WeakMap(), $5 = new WeakMap(), $6 = new WeakMap(), $t$0;
+let canvas = (($t$0=imba.createElement('canvas',null,'e6wu0bb',null)),
+$t$0);
+
+let measuringData = {};
+
+class CroppedImage extends imba.tags.get('component','ImbaElement') {
+	static init$(){
+		
+		return this;
+	}
+	init$(){
+		super.init$();return undefined;
+	}
+	
+	set image(value) {
+		$1$1.set(this,value);
+	}
+	get image() {
+		if (!$1$1.has(this)) { $1$1.set(this,new Image); }		return $1$1.get(this);
+	}
+	set text(value) {
+		$2$1.set(this,value);
+	}
+	get text() {
+		return $2$1.has(this) ? $2$1.get(this) : "Hello dad :) mage(data.image, data.crop.left * data.image.width, data.crop.top * data.image.height, data.crop.width * data.image.width, data.crop.height * data.ima";
+	}
+	set font(value) {
+		$3$1.set(this,value);
+	}
+	get font() {
+		if (!$3$1.has(this)) { $3$1.set(this,{
+			size: 30,
+			family: "Arial",
+			color: "white",
+			align: "center",
+			lineHeight: 1.5
+		}); }		return $3$1.get(this);
+	}
+	set blur(value) {
+		$4.set(this,value);
+	}
+	get blur() {
+		return $4.has(this) ? $4.get(this) : false;
+	}
+	set blur_radius(value) {
+		$5.set(this,value);
+	}
+	get blur_radius() {
+		return $5.has(this) ? $5.get(this) : 4;
+	}
+	set text_crop(value) {
+		$6.set(this,value);
+	}
+	get text_crop() {
+		if (!$6.has(this)) { $6.set(this,{
+			left: 0,
+			top: 0,
+			width: 0,
+			height: 0
+		}); }		return $6.get(this);
+	}
+	
+	mount(){
+		
+		// Before painting text I use crop data to crop original image
+		[this.width,this.height] = this.data.getSize(this.data.crop.width * this.data.uploaded_image.width,this.data.uploaded_image.height * this.data.crop.height);
+		this.text_crop.width = this.width;
+		this.text_crop.height = this.height;
+		this.text_crop.left = 0;
+		this.text_crop.top = 0;
+		measuringData = {
+			crop: this.text_crop,
+			width: this.width,
+			height: this.height,
+			text_resizing: true
+		};
+		
+		canvas.width = this.width;
+		canvas.height = this.height;
+		canvas.imageSmoothingQuality = 'high';
+		this.renderImage();
+		return this.calculateLuminance();
+	}
+	
+	// Needed to define correct font collor. 
+	// Dark on lighter pictures and light on darker
+	calculateLuminance(){
+		
+		let rgb = this.getAverageRGB();
+		document.body.children[2].style.backgroundColor = 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')';
+		let Y = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
+		if (Y < 128) {
+			
+			return this.font.color = "white";
+		} else {
+			return this.font.color = "black";
+		}	}
+	
+	renderImage(){
+		
+		let ctx = canvas.getContext('2d');
+		ctx.save();
+		// Clear canvas before painting
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+		
+		this.drawImage(ctx);
+		this.drawText(ctx);
+		
+		ctx.restore();
+		return imba.commit();
+	}
+	
+	drawImage(ctx){
+		
+		if (this.blur) {
+			
+			return processImage(this.data.image,canvas,this.blur_radius,false);
+		} else {
+			
+			return ctx.drawImage(this.data.image,0,0,this.width,this.height);
+		}	}
+	
+	
+	drawText(ctx){
+		
+		ctx.font = this.font.size + 'px ' + this.font.family;
+		ctx.textAlign = this.font.align;
+		ctx.fillStyle = this.font.color;
+		return this.wrapText(ctx,this.text,canvas.width / 2,canvas.height / 2,canvas.width,this.font.lineHeight * this.font.size);
+		
+	}
+	
+	wrapText(context,text,x,y,maxWidth,lineHeight){
+		var $res;
+		
+		let words = text.split(' ');
+		let line = '';
+		let lines = [];
+		let total_text_height = lineHeight;
+		
+		// Generates an array of wrapped line and
+		// calculates the height of future text to center it later
+		for (let len = words.length, n = 0, rd = len - n; (rd > 0) ? (n < len) : (n > len); (rd > 0) ? (n++) : (n--)) {
+			
+			let testLine = line + words[n] + ' ';
+			let metrics = context.measureText(testLine);
+			let testWidth = metrics.width;
+			if ((testWidth > maxWidth && n > 0)) {
+				
+				lines.push(line);
+				line = words[n] + ' ';
+				total_text_height += lineHeight;
+			} else {
+				
+				line = testLine;
+			}		}		lines.push(line);
+		
+		// TODO Before drawing text check out if it can be fitted in the canvas frames
+		if (total_text_height > canvas.height) {
+			
+			console.log("Do something with it Bo!");
+		}		
+		// Center the text position around y coordinate
+		y = y - total_text_height / 2 + lineHeight;
+		// Write the lines from top to bottom
+		$res = [];
+		for (let $i = 0, $items = iter$$4(lines), $len = $items.length; $i < $len; $i++) {
+			let line = $items[$i];
+			
+			context.fillText(line,x,y);
+			// Change position of next line to be lower
+			$res.push((y += lineHeight));
+		}		return $res;
+	}
+	
+	getAverageRGB(){
+		
+		let blockSize = 5;// only visit every 5 pixels
+		let defaultRGB = {r: 0,g: 0,b: 0};// for non-supporting envs
+		let context = canvas.getContext && canvas.getContext('2d');
+		let imgdata;
+		let i = -4;
+		let rgb = {r: 0,g: 0,b: 0};
+		let count = 0;
+		
+		if (!(context)) {
+			
+			return defaultRGB;
+			
+		}		try {
+			
+			imgdata = context.getImageData(0,0,canvas.width,canvas.height);
+		} catch (e) {
+			
+			// security error, img on diff domain */alert('x')
+			return defaultRGB;
+		}		
+		while ((i += blockSize * 4) < imgdata.data.length){
+			
+			++count;
+			rgb.r += imgdata.data[i];
+			rgb.g += imgdata.data[i + 1];
+			rgb.b += imgdata.data[i + 2];
+		}		
+		// ~~ used to floor values
+		rgb.r = ~~(rgb.r / count);
+		rgb.g = ~~(rgb.g / count);
+		rgb.b = ~~(rgb.b / count);
+		
+		return rgb;
+		
+		
+	}
+	render(){
+		var t$01, $c$0, $b$0, $d$0, $v$0, $t$1, $b$1, $d$1;
+		
+		this.renderImage();
+		t$01=this;
+		t$01.open$();
+		$c$0 = ($b$0=$d$0=1,t$01.$) || ($b$0=$d$0=0,t$01.$={});
+		($v$0=this.width,$v$0===$c$0.h || (t$01.css$var('--e6wu0bd',$c$0.h=$v$0,'px','w')));
+		($v$0=this.height,$v$0===$c$0.i || (t$01.css$var('--e6wu0be',$c$0.i=$v$0,'px','h')));
+		((!$b$0||$d$0&2) && t$01.flagSelf$('e6wu0bc'));
+		($v$0=canvas,($v$0===$c$0.j&&$b$0) || ($c$0.j_ = t$01.insert$($c$0.j=$v$0,128,$c$0.j_)));
+		$t$1 = ($b$1=$d$1=1,$c$0.k) || ($b$1=$d$1=0,$c$0.k=$t$1=imba.createComponent(MeasuringBox,t$01,null,null));
+		$b$1 || $t$1.bind$('data',{get:function(){ return measuringData },set:function(v$){ measuringData = v$; }});
+		$b$1 || !$t$1.setup || $t$1.setup($d$1);
+		$t$1.end$($d$1);
+		$b$1 || $t$1.insertInto$(t$01);
+		t$01.close$($d$0);
+		return t$01;
+	}
+} CroppedImage.init$(); imba.tags.define('cropped-image-e6wu0b',CroppedImage,{});
+
+imba.inlineStyles(".e6wu0bb:not(#_):not(#_) {display: block;}\n\n.e6wu0bc:not(#_):not(#_) {position: relative;\ndisplay: block;\nwidth: var(--e6wu0bd);\nheight: var(--e6wu0be);\noverflow: visible;\nbackground: hsla(201.00,100.00%,96.08%,100%);}\n\n");
+/*
+.e6wu0bb:not(#_):not(#_) {display: block;}
+
+.e6wu0bc:not(#_):not(#_) {position: relative;
+display: block;
+width: var(--e6wu0bd);
+height: var(--e6wu0be);
+overflow: visible;
+background: hsla(201.00,100.00%,96.08%,100%);}
+
+
+*/
+
+var $1$2 = new WeakMap(), $2$2 = new WeakMap(), $t$0$1;
+
+// Here we save crop information
+let crop$1 = {
+	left: 0,
+	top: 0,
+	width: 0,
+	height: 0
+};
+
+let canvas$1 = (($t$0$1=imba.createElement('canvas',null,'f0vwtmb',null)),
+$t$0$1);
+let measuringData$1 = {};
+
+class CropImage extends imba.tags.get('component','ImbaElement') {
+	static init$(){
+		
+		return this;
+	}
+	init$(){
+		super.init$();return undefined;
+	}
+	
+	set width(value) {
+		$1$2.set(this,value);
+	}
+	get width() {
+		return $1$2.get(this);
+	}
+	set height(value) {
+		$2$2.set(this,value);
+	}
+	get height() {
+		return $2$2.get(this);
+	}
+	
+	mount(){
+		
+		[this.width,this.height] = this.data.getSize(this.data.uploaded_image.width,this.data.uploaded_image.height);
+		crop$1.width = this.width;
+		crop$1.height = this.height;
+		crop$1.left = 0;
+		crop$1.top = 0;
+		measuringData$1 = {
+			crop: crop$1,
+			width: this.width,
+			height: this.height
+		};
+		
+		canvas$1.width = this.width;
+		canvas$1.height = this.height;
+		canvas$1.imageSmoothingQuality = 'high';
+		canvas$1.getContext('2d').clearRect(0,0,canvas$1.width,canvas$1.height);
+		canvas$1.getContext('2d').drawImage(this.data.uploaded_image,0,0,this.width,this.height);
+		return imba.commit();
+	}
+	
 	async cropImg(){
 		var self = this;
 		
@@ -2971,21 +3878,21 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 		// in the next stage will be "real" cropping,
 		// which will be on full image,
 		// so for that I convert the mesures to percentages
-		crop.width = crop.width / this.width;
-		crop.height = crop.height / this.height;
-		crop.left = crop.left / this.width;
-		crop.top = crop.top / this.height;
+		crop$1.width = crop$1.width / this.width;
+		crop$1.height = crop$1.height / this.height;
+		crop$1.left = crop$1.left / this.width;
+		crop$1.top = crop$1.top / this.height;
 		
-		this.data.crop = crop;
+		this.data.crop = crop$1;
 		
 		// # Get new optimized width, height and height for new canvas
-		[this.width,this.height] = this.data.getSize(crop.width * this.data.uploaded_image.width,this.data.uploaded_image.height * crop.height);
+		[this.width,this.height] = this.data.getSize(crop$1.width * this.data.uploaded_image.width,this.data.uploaded_image.height * crop$1.height);
 		canvas$1.width = this.width;
 		canvas$1.height = this.height;
 		
 		// Paint the cropped image on canvas and get toDataURL image
 		canvas$1.getContext('2d').clearRect(0,0,canvas$1.width,canvas$1.height);
-		canvas$1.getContext('2d').drawImage(this.data.uploaded_image,crop.left * this.data.uploaded_image.width,crop.top * this.data.uploaded_image.height,crop.width * this.data.uploaded_image.width,crop.height * this.data.uploaded_image.height,0,0,this.width,this.height);
+		canvas$1.getContext('2d').drawImage(this.data.uploaded_image,crop$1.left * this.data.uploaded_image.width,crop$1.top * this.data.uploaded_image.height,crop$1.width * this.data.uploaded_image.width,crop$1.height * this.data.uploaded_image.height,0,0,this.width,this.height);
 		
 		this.data.image.src = canvas$1.toDataURL();
 		// Now applied changes, grap picture and in the next tick go to the next stage
@@ -2997,89 +3904,22 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	}
 	
 	render(){
-		var self = this, t$01, $c$0, $b$0, $d$0, $v$0, $t$1, $b$1, $d$1, $v$1, $t$2, $b$2, $d$2, $v$2, $t$cwS;
+		var self = this, t$01, $c$0, $b$0, $d$0, $v$0, $t$1, $b$1, $d$1, $t$mS, $v$1;
 		
 		t$01=this;
 		t$01.open$();
 		$c$0 = ($b$0=$d$0=1,t$01.$) || ($b$0=$d$0=0,t$01.$={});
 		((!$b$0||$d$0&2) && t$01.flagSelf$('f0vwtmc'));
-		($v$0=canvas$1,($v$0===$c$0.bb&&$b$0) || ($c$0.bb_ = t$01.insert$($c$0.bb=$v$0,128,$c$0.bb_)));
-		$t$1 = ($b$1=$d$1=1,$c$0.bc) || ($b$1=$d$1=0,$c$0.bc=$t$1=imba.createElement('div',t$01,'f0vwtmf',null));
-		($v$1=this.width,$v$1===$c$0.bd || ($t$1.css$var('--f0vwtmg',$c$0.bd=$v$1,'px','w')));
-		($v$1=this.height,$v$1===$c$0.be || ($t$1.css$var('--f0vwtmh',$c$0.be=$v$1,'px','h')));
-		($v$1=crop.left,$v$1===$c$0.bf || ($t$1.css$var('--f0vwtmi',$c$0.bf=$v$1,'px','clip-path')));
-		($v$1=crop.top + crop.height,$v$1===$c$0.bg || ($t$1.css$var('--f0vwtmj',$c$0.bg=$v$1,'px','clip-path')));
-		($v$1=crop.left,$v$1===$c$0.bh || ($t$1.css$var('--f0vwtmk',$c$0.bh=$v$1,'px','clip-path')));
-		($v$1=crop.top,$v$1===$c$0.bi || ($t$1.css$var('--f0vwtml',$c$0.bi=$v$1,'px','clip-path')));
-		($v$1=crop.left + crop.width,$v$1===$c$0.bj || ($t$1.css$var('--f0vwtmm',$c$0.bj=$v$1,'px','clip-path')));
-		($v$1=crop.top,$v$1===$c$0.bk || ($t$1.css$var('--f0vwtmn',$c$0.bk=$v$1,'px','clip-path')));
-		($v$1=crop.left + crop.width,$v$1===$c$0.bl || ($t$1.css$var('--f0vwtmo',$c$0.bl=$v$1,'px','clip-path')));
-		($v$1=crop.top + crop.height,$v$1===$c$0.bm || ($t$1.css$var('--f0vwtmp',$c$0.bm=$v$1,'px','clip-path')));
-		($v$1=crop.left,$v$1===$c$0.bn || ($t$1.css$var('--f0vwtmq',$c$0.bn=$v$1,'px','clip-path')));
-		($v$1=crop.top + crop.height,$v$1===$c$0.bo || ($t$1.css$var('--f0vwtmr',$c$0.bo=$v$1,'px','clip-path')));
-		$t$1 = ($b$1=$d$1=1,$c$0.bp) || ($b$1=$d$1=0,$c$0.bp=$t$1=imba.createElement('div',t$01,'f0vwtms',null));
-		($v$1=this.width,$v$1===$c$0.bq || ($t$1.css$var('--f0vwtmt',$c$0.bq=$v$1,'px','w')));
-		($v$1=this.height,$v$1===$c$0.br || ($t$1.css$var('--f0vwtmu',$c$0.br=$v$1,'px','h')));
-		$t$2 = ($b$2=$d$2=1,$c$0.bs) || ($b$2=$d$2=0,$c$0.bs=$t$2=imba.createElement('div',$t$1,'f0vwtmv dragger',null));
-		($v$2=crop.top - 8,$v$2===$c$0.bt || ($t$2.css$var('--f0vwtmw',$c$0.bt=$v$2,'px','t')));
-		($v$2=crop.left + (crop.width) / 2 - 8,$v$2===$c$0.bu || ($t$2.css$var('--f0vwtmx',$c$0.bu=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragN(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.bv) || ($b$2=$d$2=0,$c$0.bv=$t$2=imba.createElement('div',$t$1,'f0vwtmy dragger',null));
-		($v$2=crop.top + (crop.height) / 2 - 8,$v$2===$c$0.bw || ($t$2.css$var('--f0vwtmz',$c$0.bw=$v$2,'px','t')));
-		($v$2=crop.left + crop.width - 8,$v$2===$c$0.bx || ($t$2.css$var('--f0vwtmaa',$c$0.bx=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragE(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.by) || ($b$2=$d$2=0,$c$0.by=$t$2=imba.createElement('div',$t$1,'f0vwtmab dragger',null));
-		($v$2=crop.top + crop.height - 8,$v$2===$c$0.bz || ($t$2.css$var('--f0vwtmac',$c$0.bz=$v$2,'px','t')));
-		($v$2=crop.left + (crop.width) / 2 - 8,$v$2===$c$0.ca || ($t$2.css$var('--f0vwtmad',$c$0.ca=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragS(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.cb) || ($b$2=$d$2=0,$c$0.cb=$t$2=imba.createElement('div',$t$1,'f0vwtmae dragger',null));
-		($v$2=crop.top + (crop.height) / 2 - 8,$v$2===$c$0.cc || ($t$2.css$var('--f0vwtmaf',$c$0.cc=$v$2,'px','t')));
-		($v$2=crop.left - 8,$v$2===$c$0.cd || ($t$2.css$var('--f0vwtmag',$c$0.cd=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragW(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.ce) || ($b$2=$d$2=0,$c$0.ce=$t$2=imba.createElement('div',$t$1,'f0vwtmah dragger',null));
-		($v$2=crop.top - 8,$v$2===$c$0.cf || ($t$2.css$var('--f0vwtmai',$c$0.cf=$v$2,'px','t')));
-		($v$2=crop.left - 8,$v$2===$c$0.cg || ($t$2.css$var('--f0vwtmaj',$c$0.cg=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragNW(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.ch) || ($b$2=$d$2=0,$c$0.ch=$t$2=imba.createElement('div',$t$1,'f0vwtmak dragger',null));
-		($v$2=crop.top - 8,$v$2===$c$0.ci || ($t$2.css$var('--f0vwtmal',$c$0.ci=$v$2,'px','t')));
-		($v$2=crop.left + crop.width - 8,$v$2===$c$0.cj || ($t$2.css$var('--f0vwtmam',$c$0.cj=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragNE(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.ck) || ($b$2=$d$2=0,$c$0.ck=$t$2=imba.createElement('div',$t$1,'f0vwtman dragger',null));
-		($v$2=crop.top + crop.height - 8,$v$2===$c$0.cl || ($t$2.css$var('--f0vwtmao',$c$0.cl=$v$2,'px','t')));
-		($v$2=crop.left + crop.width - 8,$v$2===$c$0.cm || ($t$2.css$var('--f0vwtmap',$c$0.cm=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragSE(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.cn) || ($b$2=$d$2=0,$c$0.cn=$t$2=imba.createElement('div',$t$1,'f0vwtmaq dragger',null));
-		($v$2=crop.top + crop.height - 8,$v$2===$c$0.co || ($t$2.css$var('--f0vwtmar',$c$0.co=$v$2,'px','t')));
-		($v$2=crop.left - 8,$v$2===$c$0.cp || ($t$2.css$var('--f0vwtmas',$c$0.cp=$v$2,'px','l')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragSW(e);
-		}]},this));
-		$t$2 = ($b$2=$d$2=1,$c$0.cq) || ($b$2=$d$2=0,$c$0.cq=$t$2=imba.createElement('div',$t$1,'f0vwtmat',null));
-		($v$2=crop.top,$v$2===$c$0.cr || ($t$2.css$var('--f0vwtmau',$c$0.cr=$v$2,'px','t')));
-		($v$2=crop.left,$v$2===$c$0.cs || ($t$2.css$var('--f0vwtmav',$c$0.cs=$v$2,'px','l')));
-		($v$2=crop.width,$v$2===$c$0.ct || ($t$2.css$var('--f0vwtmaw',$c$0.ct=$v$2,'px','w')));
-		($v$2=crop.height,$v$2===$c$0.cu || ($t$2.css$var('--f0vwtmax',$c$0.cu=$v$2,'px','h')));
-		$b$2 || ($t$2.on$(`touch`,{$_: [function(e,$) {
-			return self.dragCropArea(e);
-		}]},this));
-		$t$1 = ($b$1=$d$1=1,$c$0.cv) || ($b$1=$d$1=0,$c$0.cv=$t$1=imba.createComponent(Add,t$01,'f0vwtmay',"Next"));
-		$t$cwS = $t$1.slot$('__',$c$0);
-		($v$1=this.height + 8,$v$1===$c$0.cx || ($t$1.css$var('--f0vwtmaz',$c$0.cx=$v$1,'px','t')));
-		($v$1=this.width,$v$1===$c$0.cy || ($t$1.css$var('--f0vwtmba',$c$0.cy=$v$1,'px','w')));
+		($v$0=canvas$1,($v$0===$c$0.i&&$b$0) || ($c$0.i_ = t$01.insert$($c$0.i=$v$0,128,$c$0.i_)));
+		$t$1 = ($b$1=$d$1=1,$c$0.j) || ($b$1=$d$1=0,$c$0.j=$t$1=imba.createComponent(MeasuringBox,t$01,null,null));
+		$b$1 || $t$1.bind$('data',{get:function(){ return measuringData$1 },set:function(v$){ measuringData$1 = v$; }});
+		$b$1 || !$t$1.setup || $t$1.setup($d$1);
+		$t$1.end$($d$1);
+		$b$1 || $t$1.insertInto$(t$01);
+		$t$1 = ($b$1=$d$1=1,$c$0.l) || ($b$1=$d$1=0,$c$0.l=$t$1=imba.createComponent(Add,t$01,'f0vwtmf',"Next"));
+		$t$mS = $t$1.slot$('__',$c$0);
+		($v$1=this.height + 8,$v$1===$c$0.n || ($t$1.css$var('--f0vwtmg',$c$0.n=$v$1,'px','t')));
+		($v$1=this.width,$v$1===$c$0.o || ($t$1.css$var('--f0vwtmh',$c$0.o=$v$1,'px','w')));
 		$b$1 || ($t$1.on$(`click`,{$_: [function(e,$) {
 			return self.cropImg(e);
 		}]},this));
@@ -3093,7 +3933,7 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	
 } CropImage.init$(); imba.tags.define('crop-image-f0vwtm',CropImage,{});
 
-imba.inlineStyles(".f0vwtmb:not(#_):not(#_) {display: block;}\n\n.f0vwtmc:not(#_):not(#_) {position: relative;\ndisplay: block;\noverflow: visible;\nbackground: hsla(201.00,100.00%,96.08%,100%);}\n\n.f0vwtmf:not(#_):not(#_) {position: absolute;\ndisplay: block;\nleft: 0rem;\ntop: 0rem;\nwidth: var(--f0vwtmg);\nheight: var(--f0vwtmh);\nbackground: rgba(0, 0, 0, 0.5);\nclip-path: polygon(0% 0%, 0% 100%, var(--f0vwtmi) var(--f0vwtmj), var(--f0vwtmk) var(--f0vwtml), var(--f0vwtmm) var(--f0vwtmn), var(--f0vwtmo) var(--f0vwtmp), var(--f0vwtmq) var(--f0vwtmr), 0% 100%, 100% 100%, 100% 0%);}\n\n.f0vwtms:not(#_):not(#_) {position: absolute;\ndisplay: block;\nleft: 0rem;\ntop: 0rem;\nwidth: var(--f0vwtmt);\nheight: var(--f0vwtmu);}\n\n.f0vwtmv:not(#_):not(#_) {top: var(--f0vwtmw);\nleft: var(--f0vwtmx);\ncursor: ns-resize;}\n\n.f0vwtmy:not(#_):not(#_) {top: var(--f0vwtmz);\nleft: var(--f0vwtmaa);\ncursor: ew-resize;}\n\n.f0vwtmab:not(#_):not(#_) {top: var(--f0vwtmac);\nleft: var(--f0vwtmad);\ncursor: ns-resize;}\n\n.f0vwtmae:not(#_):not(#_) {top: var(--f0vwtmaf);\nleft: var(--f0vwtmag);\ncursor: ew-resize;}\n\n.f0vwtmah:not(#_):not(#_) {top: var(--f0vwtmai);\nleft: var(--f0vwtmaj);\ncursor: nwse-resize;}\n\n.f0vwtmak:not(#_):not(#_) {top: var(--f0vwtmal);\nleft: var(--f0vwtmam);\ncursor: nesw-resize;}\n\n.f0vwtman:not(#_):not(#_) {top: var(--f0vwtmao);\nleft: var(--f0vwtmap);\ncursor: nwse-resize;}\n\n.f0vwtmaq:not(#_):not(#_) {top: var(--f0vwtmar);\nleft: var(--f0vwtmas);\ncursor: nesw-resize;}\n\n.f0vwtmat:not(#_):not(#_) {position: absolute;\ntop: var(--f0vwtmau);\nleft: var(--f0vwtmav);\nwidth: var(--f0vwtmaw);\nheight: var(--f0vwtmax);\ncursor: move;}\n\n.f0vwtmay:not(#_):not(#_) {position: absolute;\ntop: var(--f0vwtmaz);\nwidth: var(--f0vwtmba);\nleft: 0rem;}\n\ncrop-image-f0vwtm .dragger:not(#_) {position: absolute;\nwidth: 16px;\nheight: 16px;\nbackground: rgba(192, 192, 192, 0.5);\nz-index: 3;}\n\n");
+imba.inlineStyles(".f0vwtmb:not(#_):not(#_) {display: block;}\n\n.f0vwtmc:not(#_):not(#_) {position: relative;\ndisplay: block;\noverflow: visible;\nbackground: hsla(201.00,100.00%,96.08%,100%);}\n\n.f0vwtmf:not(#_):not(#_) {position: absolute;\ntop: var(--f0vwtmg);\nwidth: var(--f0vwtmh);\nleft: 0rem;}\n\ncrop-image-f0vwtm .dragger:not(#_) {position: absolute;\nwidth: 16px;\nheight: 16px;\nbackground: rgba(192, 192, 192, 0.5);\nz-index: 3;}\n\n");
 /*
 .f0vwtmb:not(#_):not(#_) {display: block;}
 
@@ -3103,63 +3943,8 @@ overflow: visible;
 background: hsla(201.00,100.00%,96.08%,100%);}
 
 .f0vwtmf:not(#_):not(#_) {position: absolute;
-display: block;
-left: 0rem;
-top: 0rem;
-width: var(--f0vwtmg);
-height: var(--f0vwtmh);
-background: rgba(0, 0, 0, 0.5);
-clip-path: polygon(0% 0%, 0% 100%, var(--f0vwtmi) var(--f0vwtmj), var(--f0vwtmk) var(--f0vwtml), var(--f0vwtmm) var(--f0vwtmn), var(--f0vwtmo) var(--f0vwtmp), var(--f0vwtmq) var(--f0vwtmr), 0% 100%, 100% 100%, 100% 0%);}
-
-.f0vwtms:not(#_):not(#_) {position: absolute;
-display: block;
-left: 0rem;
-top: 0rem;
-width: var(--f0vwtmt);
-height: var(--f0vwtmu);}
-
-.f0vwtmv:not(#_):not(#_) {top: var(--f0vwtmw);
-left: var(--f0vwtmx);
-cursor: ns-resize;}
-
-.f0vwtmy:not(#_):not(#_) {top: var(--f0vwtmz);
-left: var(--f0vwtmaa);
-cursor: ew-resize;}
-
-.f0vwtmab:not(#_):not(#_) {top: var(--f0vwtmac);
-left: var(--f0vwtmad);
-cursor: ns-resize;}
-
-.f0vwtmae:not(#_):not(#_) {top: var(--f0vwtmaf);
-left: var(--f0vwtmag);
-cursor: ew-resize;}
-
-.f0vwtmah:not(#_):not(#_) {top: var(--f0vwtmai);
-left: var(--f0vwtmaj);
-cursor: nwse-resize;}
-
-.f0vwtmak:not(#_):not(#_) {top: var(--f0vwtmal);
-left: var(--f0vwtmam);
-cursor: nesw-resize;}
-
-.f0vwtman:not(#_):not(#_) {top: var(--f0vwtmao);
-left: var(--f0vwtmap);
-cursor: nwse-resize;}
-
-.f0vwtmaq:not(#_):not(#_) {top: var(--f0vwtmar);
-left: var(--f0vwtmas);
-cursor: nesw-resize;}
-
-.f0vwtmat:not(#_):not(#_) {position: absolute;
-top: var(--f0vwtmau);
-left: var(--f0vwtmav);
-width: var(--f0vwtmaw);
-height: var(--f0vwtmax);
-cursor: move;}
-
-.f0vwtmay:not(#_):not(#_) {position: absolute;
-top: var(--f0vwtmaz);
-width: var(--f0vwtmba);
+top: var(--f0vwtmg);
+width: var(--f0vwtmh);
 left: 0rem;}
 
 crop-image-f0vwtm .dragger:not(#_) {position: absolute;
@@ -3171,7 +3956,7 @@ z-index: 3;}
 
 */
 
-var $1$2 = new WeakMap(), $2$2 = new WeakMap(), $3$1 = new WeakMap(), $4 = new WeakMap();
+var $1$3 = new WeakMap(), $2$3 = new WeakMap(), $3$2 = new WeakMap(), $4$1 = new WeakMap();
 class ImageState {
 	static init$(){
 		
@@ -3183,36 +3968,35 @@ class ImageState {
 	}
 	
 	set uploaded_image(value) {
-		$1$2.set(this,value);
+		$1$3.set(this,value);
 	}
 	get uploaded_image() {
-		if (!$1$2.has(this)) { $1$2.set(this,new Image); }		return $1$2.get(this);
+		if (!$1$3.has(this)) { $1$3.set(this,new Image); }		return $1$3.get(this);
 	}
 	set image(value) {
-		$2$2.set(this,value);
+		$2$3.set(this,value);
 	}
 	get image() {
-		if (!$2$2.has(this)) { $2$2.set(this,new Image); }		return $2$2.get(this);
+		if (!$2$3.has(this)) { $2$3.set(this,new Image); }		return $2$3.get(this);
 	}
 	
 	set stage(value) {
-		$3$1.set(this,value);
+		$3$2.set(this,value);
 	}
 	get stage() {
-		return $3$1.has(this) ? $3$1.get(this) : 0;
+		return $3$2.has(this) ? $3$2.get(this) : 0;
 	}
 	set crop(value) {
-		$4.set(this,value);
+		$4$1.set(this,value);
 	}
 	get crop() {
-		if (!$4.has(this)) { $4.set(this,{
+		if (!$4$1.has(this)) { $4$1.set(this,{
 			left: 0,
 			top: 0,
 			width: 0,
 			height: 0
-		}); }		return $4.get(this);
+		}); }		return $4$1.get(this);
 	}
-	
 	
 	// def constructor
 	// 	console.log("initialize")
@@ -3259,7 +4043,7 @@ class ImageState {
 	}
 } ImageState.init$();
 
-var $1$3 = new WeakMap();
+var $1$4 = new WeakMap();
 
 
 
@@ -3276,10 +4060,10 @@ class AppRootComponent extends imba.tags.get('component','ImbaElement') {
 	}
 	
 	set imgstate(value) {
-		$1$3.set(this,value);
+		$1$4.set(this,value);
 	}
 	get imgstate() {
-		if (!$1$3.has(this)) { $1$3.set(this,new ImageState); }		return $1$3.get(this);
+		if (!$1$4.has(this)) { $1$4.set(this,new ImageState); }		return $1$4.get(this);
 	}
 	
 	render(){

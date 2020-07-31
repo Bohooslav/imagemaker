@@ -3139,7 +3139,6 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 	
 	mount(){
 		
-		console.log(this.data);
 		crop = this.data.crop;
 		this.width = this.data.width;
 		this.height = this.data.height;
@@ -3156,7 +3155,7 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 	moveN(e){
 		
 		const new_height = bcrop.height - e.dy;
-		if (e.dy < 0 && (new_height > this.height || bcrop.top + e.dy < 0) && crop.width * 2 >= new_height) {
+		if (e.dy < 0 && (new_height > this.height || bcrop.top + e.dy < 0) && crop.width * 2 >= bcrop.height + bcrop.top) {
 			
 			crop.top = 0;
 			return crop.height = bcrop.height + bcrop.top;
@@ -3164,7 +3163,7 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 			
 			crop.height = crop.width * 2;
 			return crop.top = (bcrop.height - crop.height) + bcrop.top;
-		} else if (this.height >= new_height && new_height >= crop.width / 2 && this.height >= 64) {
+		} else if (this.height >= new_height && new_height >= crop.width / 2 && new_height >= 64) {
 			
 			crop.height = new_height;
 			return crop.top = bcrop.top + e.dy;
@@ -3177,34 +3176,51 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 	moveW(e){
 		
 		const new_width = bcrop.width - e.dx;
-		if (e.dx < 0 && (bcrop.width - e.dx > this.width || bcrop.left + e.dx < 0) && crop.height * 2 >= new_width) {
+		// This function is used for text editing where is another restrictions
+		if (!(this.text_resizing)) {
 			
-			crop.left = 0;
-			return crop.width = bcrop.width + bcrop.left;
-		} else if (new_width >= crop.height * 2) {
+			if (e.dx < 0 && (bcrop.width - e.dx > this.width || bcrop.left + e.dx < 0) && crop.height * 2 >= bcrop.width + bcrop.left) {
+				
+				crop.left = 0;
+				return crop.width = bcrop.width + bcrop.left;
+			} else if (new_width >= crop.height * 2) {
+				
+				crop.width = crop.height * 2;
+				return crop.left = (bcrop.width - crop.width) + bcrop.left;
+			} else if (this.width >= new_width && new_width >= crop.height / 2 && new_width >= 64) {
+				
+				crop.width = new_width;
+				return crop.left = bcrop.left + e.dx;
+			} else {
+				
+				crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
+				return crop.left = bcrop.left + (bcrop.width - crop.width);
+			}		} else {
 			
-			crop.width = crop.height * 2;
-			return crop.left = (bcrop.width - crop.width) + bcrop.left;
-		} else if (this.width >= new_width && new_width >= crop.height / 2 && this.height >= 64) {
-			
-			crop.width = new_width;
-			return crop.left = bcrop.left + e.dx;
-		} else {
-			
-			crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
-			return crop.left = bcrop.left + (bcrop.width - crop.width);
-		}	}
+			if (e.dx < 0 && (bcrop.width - e.dx > this.width || bcrop.left + e.dx < 0)) {
+				
+				crop.left = 0;
+				return crop.width = bcrop.width + bcrop.left;
+			} else if (this.width >= new_width && new_width >= crop.height / 2 && new_width >= 64) {
+				
+				crop.width = new_width;
+				return crop.left = bcrop.left + e.dx;
+			} else {
+				
+				crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
+				return crop.left = bcrop.left + (bcrop.width - crop.width);
+			}		}	}
 	
 	moveS(e){
 		
 		const new_height = bcrop.height + e.dy;
-		if (e.dy > 0 && bcrop.top + bcrop.height + e.dy > this.height && crop.width * 2 >= new_height) {
+		if (e.dy > 0 && bcrop.top + bcrop.height + e.dy > this.height && crop.width * 2 >= this.height - bcrop.top) {
 			
 			return crop.height = this.height - bcrop.top;
 		} else if (new_height >= crop.width * 2) {
 			
 			return crop.height = crop.width * 2;
-		} else if (this.height >= new_height && new_height >= crop.width / 2 && this.height >= 64) {
+		} else if (this.height >= new_height && new_height >= crop.width / 2 && new_height >= 64) {
 			
 			return crop.height = new_height;
 		} else {
@@ -3215,19 +3231,32 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 	moveE(e){
 		
 		const new_width = bcrop.width + e.dx;
-		if (e.dx > 0 && bcrop.left + bcrop.width + e.dx > this.width && crop.height * 2 >= new_width) {
+		if (!(this.text_resizing)) {
 			
-			return crop.width = this.width - bcrop.left;
-		} else if (new_width >= crop.height * 2) {
+			if (e.dx > 0 && bcrop.left + bcrop.width + e.dx > this.width && crop.height * 2 >= this.width - bcrop.left) {
+				
+				return crop.width = this.width - bcrop.left;
+			} else if (new_width >= crop.height * 2) {
+				
+				return crop.width = crop.height * 2;
+			} else if (this.width >= new_width && new_width >= crop.height / 2 && new_width >= 64) {
+				
+				return crop.width = new_width;
+			} else {
+				
+				return crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
+			}		} else {
 			
-			return crop.width = crop.height * 2;
-		} else if (this.width >= new_width && new_width >= crop.height / 2 && this.height >= 64) {
-			
-			return crop.width = new_width;
-		} else {
-			
-			return crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
-		}	}
+			if (e.dx > 0 && bcrop.left + bcrop.width + e.dx > this.width) {
+				
+				return crop.width = this.width - bcrop.left;
+			} else if (this.width >= new_width && new_width >= crop.height / 2 && new_width >= 64) {
+				
+				return crop.width = new_width;
+			} else {
+				
+				return crop.width = (crop.height / 2 > 64) ? (crop.height / 2) : 64;
+			}		}	}
 	
 	// # # # # Functions that trigger concrete functions to change concrete sides
 	// Fonctions for sides changes
@@ -3438,7 +3467,7 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 			
 			$bg$0$2 = ($b$3=$d$3=1,$c$0.cw) || ($b$3=$d$3=0,$c$0.cw=$bg$0$2=imba.createElement('div',null,'vhmu9bat dragger',null));
 			$b$3||($bg$0$2.up$=$t$1);
-			($v$3=this.height,$v$3===$c$0.cx || ($bg$0$2.css$var('--vhmu9bau',$c$0.cx=$v$3,'px','h')));
+			($v$3=crop.height,$v$3===$c$0.cx || ($bg$0$2.css$var('--vhmu9bau',$c$0.cx=$v$3,'px','h')));
 			($v$3=crop.top,$v$3===$c$0.cy || ($bg$0$2.css$var('--vhmu9bav',$c$0.cy=$v$3,'px','t')));
 			($v$3=crop.left + crop.width - 8,$v$3===$c$0.cz || ($bg$0$2.css$var('--vhmu9baw',$c$0.cz=$v$3,'px','l')));
 			$b$3 || ($bg$0$2.on$(`touch`,{$_: [function(e,$) {
@@ -3446,7 +3475,7 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 			}]},this));
 			$bg$1$2 = ($b$3=$d$3=1,$c$0.da) || ($b$3=$d$3=0,$c$0.da=$bg$1$2=imba.createElement('div',null,'vhmu9bax dragger',null));
 			$b$3||($bg$1$2.up$=$t$1);
-			($v$3=this.height,$v$3===$c$0.db || ($bg$1$2.css$var('--vhmu9bay',$c$0.db=$v$3,'px','h')));
+			($v$3=crop.height,$v$3===$c$0.db || ($bg$1$2.css$var('--vhmu9bay',$c$0.db=$v$3,'px','h')));
 			($v$3=crop.top,$v$3===$c$0.dc || ($bg$1$2.css$var('--vhmu9baz',$c$0.dc=$v$3,'px','t')));
 			($v$3=crop.left - 8,$v$3===$c$0.dd || ($bg$1$2.css$var('--vhmu9bba',$c$0.dd=$v$3,'px','l')));
 			$b$3 || ($bg$1$2.on$(`touch`,{$_: [function(e,$) {
@@ -3565,7 +3594,8 @@ z-index: 3;}
 
 */
 
-function iter$$4(a){ return a ? (a.toIterable ? a.toIterable() : a) : []; }var $1$1 = new WeakMap(), $2$1 = new WeakMap(), $3$1 = new WeakMap(), $4 = new WeakMap(), $5 = new WeakMap(), $6 = new WeakMap(), $t$0;
+function iter$$4(a){ return a ? (a.toIterable ? a.toIterable() : a) : []; }var $1$1 = new WeakMap(), $2$1 = new WeakMap(), $3$1 = new WeakMap(), $4 = new WeakMap(), $5 = new WeakMap(), $6 = new WeakMap(), $7 = new WeakMap(), $t$0;
+
 let canvas = (($t$0=imba.createElement('canvas',null,'e6wu0bb',null)),
 $t$0);
 
@@ -3627,14 +3657,20 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 			height: 0
 		}); }		return $6.get(this);
 	}
+	set total_text_height(value) {
+		$7.set(this,value);
+	}
+	get total_text_height() {
+		return $7.has(this) ? $7.get(this) : 1.5;
+	}
 	
 	mount(){
 		
 		// Before painting text I use crop data to crop original image
 		[this.width,this.height] = this.data.getSize(this.data.crop.width * this.data.uploaded_image.width,this.data.uploaded_image.height * this.data.crop.height);
-		this.text_crop.width = this.width;
+		this.text_crop.width = this.width * 0.9;
 		this.text_crop.height = this.height;
-		this.text_crop.left = 0;
+		this.text_crop.left = this.width * 0.05;
 		this.text_crop.top = 0;
 		measuringData = {
 			crop: this.text_crop,
@@ -3647,6 +3683,7 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		canvas.height = this.height;
 		canvas.imageSmoothingQuality = 'high';
 		this.renderImage();
+		this.calculateTop();
 		return this.calculateLuminance();
 	}
 	
@@ -3663,6 +3700,11 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		} else {
 			return this.font.color = "black";
 		}	}
+	
+	calculateTop(){
+		
+		return this.text_crop.top = (this.height - this.total_text_height) / 2;
+	}
 	
 	renderImage(){
 		
@@ -3694,17 +3736,18 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		ctx.font = this.font.size + 'px ' + this.font.family;
 		ctx.textAlign = this.font.align;
 		ctx.fillStyle = this.font.color;
-		return this.wrapText(ctx,this.text,canvas.width / 2,canvas.height / 2,canvas.width,this.font.lineHeight * this.font.size);
-		
+		const x = this.text_crop.width / 2 + this.text_crop.left;
+		const y = this.text_crop.height / 2 + this.text_crop.top - (this.font.lineHeight * this.font.size) / 4;
+		return this.wrapText(ctx,x,y,this.text_crop.width,this.font.lineHeight * this.font.size);
 	}
 	
-	wrapText(context,text,x,y,maxWidth,lineHeight){
+	wrapText(context,x,y,maxWidth,lineHeight){
 		var $res;
 		
-		let words = text.split(' ');
+		let words = this.text.split(' ');
 		let line = '';
 		let lines = [];
-		let total_text_height = lineHeight;
+		this.total_text_height = lineHeight;
 		
 		// Generates an array of wrapped line and
 		// calculates the height of future text to center it later
@@ -3717,19 +3760,20 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 				
 				lines.push(line);
 				line = words[n] + ' ';
-				total_text_height += lineHeight;
+				this.total_text_height += lineHeight;
 			} else {
 				
 				line = testLine;
 			}		}		lines.push(line);
 		
 		// TODO Before drawing text check out if it can be fitted in the canvas frames
-		if (total_text_height > canvas.height) {
+		if (this.total_text_height > canvas.height) {
 			
 			console.log("Do something with it Bo!");
 		}		
+		this.text_crop.height = this.total_text_height;
 		// Center the text position around y coordinate
-		y = y - total_text_height / 2 + lineHeight;
+		y = y - this.total_text_height / 2 + lineHeight;
 		// Write the lines from top to bottom
 		$res = [];
 		for (let $i = 0, $items = iter$$4(lines), $len = $items.length; $i < $len; $i++) {
@@ -3776,9 +3820,9 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		rgb.b = ~~(rgb.b / count);
 		
 		return rgb;
-		
-		
 	}
+	
+	
 	render(){
 		var t$01, $c$0, $b$0, $d$0, $v$0, $t$1, $b$1, $d$1;
 		

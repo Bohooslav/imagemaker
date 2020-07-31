@@ -1,6 +1,7 @@
 # const StackBlur = require('stackblur-canvas')
 import * as StackBlur from 'stackblur-canvas'
 import {MeasuringBox} from './MeasuringBox'
+
 let canvas = <canvas[d: block]>
 
 let measuringData = {}
@@ -23,13 +24,14 @@ export tag CroppedImage
 		width: 0
 		height: 0
 	}
+	total_text_height = 1.5
 
 	def mount
 		# Before painting text I use crop data to crop original image
 		[width, height] = data.getSize(data.crop.width * data.uploaded_image.width, data.uploaded_image.height * data.crop.height)
-		text_crop.width = width
+		text_crop.width = width * 0.9
 		text_crop.height = height
-		text_crop.left = 0
+		text_crop.left = width * 0.05
 		text_crop.top = 0
 		measuringData =
 			crop: text_crop
@@ -41,6 +43,7 @@ export tag CroppedImage
 		canvas.height = height
 		canvas.imageSmoothingQuality = 'high'
 		renderImage()
+		calculateTop()
 		calculateLuminance()
 
 	# Needed to define correct font collor. 
@@ -52,6 +55,9 @@ export tag CroppedImage
 		if Y < 128
 			font.color = "white"
 		else font.color = "black"
+
+	def calculateTop
+		text_crop.top = (height - total_text_height) / 2
 
 	def renderImage
 		let ctx = canvas.getContext('2d')
@@ -76,14 +82,15 @@ export tag CroppedImage
 		ctx.font = font.size + 'px ' + font.family
 		ctx.textAlign = font.align
 		ctx.fillStyle = font.color
-		wrapText(ctx, text, canvas.width/2, canvas.height/2, canvas.width, font.line-height * font.size)
-		
+		const x = text_crop.width / 2 + text_crop.left
+		const y = text_crop.height / 2 + text_crop.top - (font.line-height * font.size) / 4
+		wrapText(ctx, x, y, text_crop.width, font.line-height * font.size)
 
-	def wrapText context, text, x, y, maxWidth, lineHeight
+	def wrapText context, x, y, maxWidth, lineHeight
 		let words = text.split(' ')
 		let line = ''
 		let lines = []
-		let total_text_height = lineHeight
+		total_text_height = lineHeight
 
 		# Generates an array of wrapped line and
 		# calculates the height of future text to center it later
@@ -102,7 +109,8 @@ export tag CroppedImage
 		# TODO Before drawing text check out if it can be fitted in the canvas frames
 		if total_text_height > canvas.height
 			console.log "Do something with it Bo!"
-
+		
+		text_crop.height = total_text_height
 		# Center the text position around y coordinate
 		y = y - total_text_height / 2 + lineHeight
 		# Write the lines from top to bottom
@@ -142,7 +150,7 @@ export tag CroppedImage
 		
 		return rgb
 
-		
+
 	def render
 		renderImage()
 		<self[pos: relative d:block w: {width}px h: {height}px overflow:visible bg:blue1]>

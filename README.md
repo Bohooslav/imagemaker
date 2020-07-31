@@ -1,4 +1,4 @@
-# Imagemager
+# Imagemaker
 A project for placing text on pictures.
 
 > You are running a bleeding 🩸edge project 👨🏾‍🚀👩🏼‍🚀. Expect bugs and report them❗

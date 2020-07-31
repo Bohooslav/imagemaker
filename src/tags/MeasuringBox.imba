@@ -23,7 +23,6 @@ export tag MeasuringBox
 	prop text_resizing = no
 
 	def mount
-		console.log data
 		crop = data.crop
 		width = data.width
 		height = data.height
@@ -36,13 +35,13 @@ export tag MeasuringBox
 	# Functions that calculate new value concrete side
 	def moveN e
 		const new_height = bcrop.height - e.dy
-		if e.dy < 0 && (new_height > height || bcrop.top + e.dy < 0) && crop.width * 2 >= new_height
+		if e.dy < 0 && (new_height > height || bcrop.top + e.dy < 0) && crop.width * 2 >= bcrop.height + bcrop.top
 			crop.top = 0
 			crop.height = bcrop.height + bcrop.top
 		elif new_height >= crop.width * 2
 			crop.height = crop.width * 2
 			crop.top = (bcrop.height - crop.height) + bcrop.top
-		elif height >= new_height >= crop.width / 2 && height >= 64
+		elif height >= new_height >= crop.width / 2 && new_height >= 64
 			crop.height = new_height
 			crop.top = bcrop.top + e.dy
 		else
@@ -51,40 +50,61 @@ export tag MeasuringBox
 
 	def moveW e
 		const new_width = bcrop.width - e.dx
-		if e.dx < 0 && (bcrop.width - e.dx > width || bcrop.left + e.dx < 0) && crop.height * 2 >= new_width
-			crop.left = 0
-			crop.width = bcrop.width + bcrop.left
-		elif new_width >= crop.height * 2
-			crop.width = crop.height * 2
-			crop.left = (bcrop.width - crop.width) + bcrop.left
-		elif width >= new_width >= crop.height / 2 && height >= 64
-			crop.width = new_width
-			crop.left = bcrop.left + e.dx
+		# This function is used for text editing where is another restrictions
+		unless text_resizing
+			if e.dx < 0 && (bcrop.width - e.dx > width || bcrop.left + e.dx < 0) && crop.height * 2 >= bcrop.width + bcrop.left
+				crop.left = 0
+				crop.width = bcrop.width + bcrop.left
+			elif new_width >= crop.height * 2
+				crop.width = crop.height * 2
+				crop.left = (bcrop.width - crop.width) + bcrop.left
+			elif width >= new_width >= crop.height / 2 && new_width >= 64
+				crop.width = new_width
+				crop.left = bcrop.left + e.dx
+			else
+				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
+				crop.left = bcrop.left + (bcrop.width - crop.width)
 		else
-			crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
-			crop.left = bcrop.left + (bcrop.width - crop.width)
+			if e.dx < 0 && (bcrop.width - e.dx > width || bcrop.left + e.dx < 0)
+				crop.left = 0
+				crop.width = bcrop.width + bcrop.left
+			elif width >= new_width >= crop.height / 2 && new_width >= 64
+				crop.width = new_width
+				crop.left = bcrop.left + e.dx
+			else
+				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
+				crop.left = bcrop.left + (bcrop.width - crop.width)
 
 	def moveS e
 		const new_height = bcrop.height + e.dy
-		if e.dy > 0 && bcrop.top + bcrop.height + e.dy > height && crop.width * 2 >= new_height
+		if e.dy > 0 && bcrop.top + bcrop.height + e.dy > height && crop.width * 2 >= height - bcrop.top
 			crop.height = height - bcrop.top
 		elif new_height >= crop.width * 2
 			crop.height = crop.width * 2
-		elif height >= new_height >= crop.width / 2 && height >= 64
+		elif height >= new_height >= crop.width / 2 && new_height >= 64
 			crop.height = new_height
 		else
 			crop.height = crop.width / 2 > 64 ? crop.width / 2 : 64
 
 	def moveE e
 		const new_width = bcrop.width + e.dx
-		if e.dx > 0 && bcrop.left + bcrop.width + e.dx > width && crop.height * 2 >= new_width
-			crop.width = width - bcrop.left
-		elif new_width >= crop.height * 2
-			crop.width = crop.height * 2
-		elif width >= new_width >= crop.height / 2 && height >= 64
-			crop.width = new_width
+		unless text_resizing
+			if e.dx > 0 && bcrop.left + bcrop.width + e.dx > width && crop.height * 2 >= width - bcrop.left
+				crop.width = width - bcrop.left
+			elif new_width >= crop.height * 2
+				crop.width = crop.height * 2
+			elif width >= new_width >= crop.height / 2 && new_width >= 64
+				crop.width = new_width
+			else
+				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
 		else
-			crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
+			if e.dx > 0 && bcrop.left + bcrop.width + e.dx > width
+				crop.width = width - bcrop.left
+			elif width >= new_width >= crop.height / 2 && new_width >= 64
+				crop.width = new_width
+			else
+				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
+			
 
 	# # # # # Functions that trigger concrete functions to change concrete sides
 	# Fonctions for sides changes
@@ -183,8 +203,8 @@ export tag MeasuringBox
 					<div[t: {crop.top + crop.height - 8}px l: {crop.left + crop.width - 8}px cursor: nwse-resize].dragger @touch=dragSE>
 					<div[t: {crop.top + crop.height - 8}px l: {crop.left - 8}px cursor: nesw-resize].dragger @touch=dragSW>
 				else
-					<div[h: {height}px t: {crop.top}px l: {crop.left + crop.width - 8}px cursor: ew-resize].dragger @touch=dragE>
-					<div[h: {height}px t: {crop.top}px l: {crop.left - 8}px cursor: ew-resize].dragger @touch=dragW>
+					<div[h: {crop.height}px t: {crop.top}px l: {crop.left + crop.width - 8}px cursor: ew-resize].dragger @touch=dragE>
+					<div[h: {crop.height}px t: {crop.top}px l: {crop.left - 8}px cursor: ew-resize].dragger @touch=dragW>
 					
 
 				# Square for dragging the crop area

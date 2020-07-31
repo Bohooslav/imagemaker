@@ -1,14 +1,12 @@
 # const StackBlur = require('stackblur-canvas')
 import * as StackBlur from 'stackblur-canvas'
 import {MeasuringBox} from './MeasuringBox'
+import {MmeasuringTextState} from './MmeasuringTextState'
 
-let canvas = <canvas[d: block]>
-
-let measuringData = {}
+let measuringData = new MmeasuringTextState()
 
 export tag CroppedImage
 	image = new Image
-	text = "Hello dad :) mage(data.image, data.crop.left * data.image.width, data.crop.top * data.image.height, data.crop.width * data.image.width, data.crop.height * data.ima"
 	font = {
 		size: 30
 		family: "Arial"
@@ -23,8 +21,8 @@ export tag CroppedImage
 		top: 0
 		width: 0
 		height: 0
+		total_text_height: 1.5
 	}
-	total_text_height = 1.5
 
 	def mount
 		# Before painting text I use crop data to crop original image
@@ -33,17 +31,22 @@ export tag CroppedImage
 		text_crop.height = height
 		text_crop.left = width * 0.05
 		text_crop.top = 0
-		measuringData =
-			crop: text_crop
-			width: width
-			height: height
-			text_resizing: yes
 
-		canvas.width = width
-		canvas.height = height
-		canvas.imageSmoothingQuality = 'high'
+		measuringData.text = "After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us."
+		measuringData.crop = text_crop
+		measuringData.font = font
+		measuringData.width = width
+		measuringData.height = height
+		measuringData.text_resizing = yes
+		measuringData.minimum_text_width = 0
+
+		measuringData.canvas.width = width
+		measuringData.canvas.height = height
+		measuringData.canvas.imageSmoothingQuality = 'high'
 		renderImage()
-		calculateTop()
+
+		# Calculate top to display it in the center of the canvas
+		text_crop.top = (height - text_crop.total_text_height) / 2
 		calculateLuminance()
 
 	# Needed to define correct font collor. 
@@ -56,14 +59,11 @@ export tag CroppedImage
 			font.color = "white"
 		else font.color = "black"
 
-	def calculateTop
-		text_crop.top = (height - total_text_height) / 2
-
 	def renderImage
-		let ctx = canvas.getContext('2d')
+		let ctx = measuringData.canvas.getContext('2d')
 		ctx.save()
 		# Clear canvas before painting
-		ctx.clearRect(0, 0, canvas.width, canvas.height)
+		ctx.clearRect(0, 0, width, height)
 
 		drawImage(ctx)
 		drawText(ctx)
@@ -73,56 +73,58 @@ export tag CroppedImage
 
 	def drawImage ctx
 		if blur
-			StackBlur.image(data.image, canvas, blur_radius, no)
+			StackBlur.image(data.image, measuringData.canvas, blur_radius, no)
 		else
 			ctx.drawImage(data.image, 0, 0, width, height)
-
 
 	def drawText ctx
 		ctx.font = font.size + 'px ' + font.family
 		ctx.textAlign = font.align
 		ctx.fillStyle = font.color
+
+		# [x, y] are coordinates of the center of the position of the text on the canvas
 		const x = text_crop.width / 2 + text_crop.left
 		const y = text_crop.height / 2 + text_crop.top - (font.line-height * font.size) / 4
 		wrapText(ctx, x, y, text_crop.width, font.line-height * font.size)
 
 	def wrapText context, x, y, maxWidth, lineHeight
-		let words = text.split(' ')
-		let line = ''
-		let lines = []
-		total_text_height = lineHeight
+		if maxWidth == 0 then return
 
-		# Generates an array of wrapped line and
-		# calculates the height of future text to center it later
-		for n in [0...words.length]
-			let testLine = line + words[n] + ' '
-			let metrics = context.measureText(testLine)
-			let testWidth = metrics.width
-			if (testWidth > maxWidth && n > 0)
-				lines.push(line)
-				line = words[n] + ' '
-				total_text_height += lineHeight
-			else 
-				line = testLine
-		lines.push(line)
+		const lines = measuringData.calculateTextLines(context, maxWidth, lineHeight)
+
+		text_crop.total_text_height = lines.length * lineHeight
 
 		# TODO Before drawing text check out if it can be fitted in the canvas frames
-		if total_text_height > canvas.height
-			console.log "Do something with it Bo!"
+		# if text_crop.total_text_height > height + text_crop.top
+		# console.log text_crop.total_text_height, height - text_crop.top
+		if text_crop.total_text_height > height - text_crop.top
+			if text_crop.total_text_height > height
+				console.log "😱 😱 😱"
+			else
+				text_crop.top = height - text_crop.total_text_height
 		
-		text_crop.height = total_text_height
+		# textBoxCheck()
+		
+		text_crop.height = text_crop.total_text_height
 		# Center the text position around y coordinate
-		y = y - total_text_height / 2 + lineHeight
+		y = y - text_crop.total_text_height / 2 + lineHeight
 		# Write the lines from top to bottom
 		for line in lines
 			context.fillText(line, x, y)
 			# Change position of next line to be lower
 			y += lineHeight
 
+		
+	# # This is helper function for resizing text
+	# # It prevents the going of the text box out of canvas
+	# def textBoxCheck
+			
+				
+
 	def getAverageRGB
 		let blockSize = 5 # only visit every 5 pixels
 		let defaultRGB = {r:0,g:0,b:0} # for non-supporting envs
-		let context = canvas.getContext && canvas.getContext('2d')
+		let context = measuringData.canvas.getContext && measuringData.canvas.getContext('2d')
 		let imgdata
 		let i = -4
 		let rgb = {r:0,g:0,b:0}
@@ -132,7 +134,7 @@ export tag CroppedImage
 			return defaultRGB
 				
 		try
-			imgdata = context.getImageData(0, 0, canvas.width, canvas.height)
+			imgdata = context.getImageData(0, 0, width, height)
 		catch e
 			# security error, img on diff domain */alert('x')
 			return defaultRGB
@@ -154,5 +156,5 @@ export tag CroppedImage
 	def render
 		renderImage()
 		<self[pos: relative d:block w: {width}px h: {height}px overflow:visible bg:blue1]>
-			canvas
+			measuringData.canvas
 			<MeasuringBox bind=measuringData>

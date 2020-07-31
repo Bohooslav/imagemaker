@@ -65,14 +65,16 @@ export tag MeasuringBox
 				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
 				crop.left = bcrop.left + (bcrop.width - crop.width)
 		else
+			if data.calculateNewHeight(new_width) > height && new_width < crop.width
+				return
 			if e.dx < 0 && (bcrop.width - e.dx > width || bcrop.left + e.dx < 0)
 				crop.left = 0
 				crop.width = bcrop.width + bcrop.left
-			elif width >= new_width >= crop.height / 2 && new_width >= 64
+			elif width >= new_width >= data.minimum_text_width
 				crop.width = new_width
 				crop.left = bcrop.left + e.dx
 			else
-				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
+				crop.width = data.minimum_text_width
 				crop.left = bcrop.left + (bcrop.width - crop.width)
 
 	def moveS e
@@ -98,13 +100,14 @@ export tag MeasuringBox
 			else
 				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
 		else
+			if data.calculateNewHeight(new_width) > height && new_width < crop.width
+				return
 			if e.dx > 0 && bcrop.left + bcrop.width + e.dx > width
 				crop.width = width - bcrop.left
-			elif width >= new_width >= crop.height / 2 && new_width >= 64
+			elif width >= new_width >= data.minimum_text_width
 				crop.width = new_width
 			else
-				crop.width = crop.height / 2 > 64 ? crop.height / 2 : 64
-			
+				crop.width = data.minimum_text_width
 
 	# # # # # Functions that trigger concrete functions to change concrete sides
 	# Fonctions for sides changes

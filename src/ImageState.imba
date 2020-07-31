@@ -10,12 +10,6 @@ export class ImageState
 		height: 0
 	}
 
-	# def constructor
-	# 	console.log("initialize")
-
-	# def setup
-	# 	self
-
 	def drawImage src
 		uploaded_image.src = src
 		setTimeout(&, 1) do

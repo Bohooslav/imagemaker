@@ -8,7 +8,7 @@ A project for placing text on pictures.
 Clone this repository into your desired directory.
 
 ```
-git clone https://github.com/imba/template.git
+git clone https://github.com/Bohooslav/imagemaker.git
 ```
 
 ## Running the App

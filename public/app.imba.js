@@ -3253,7 +3253,7 @@ class MeasuringBox extends imba.tags.get('component','ImbaElement') {
 			if (this.data.calculateNewHeight(new_width) > this.height && new_width < crop.width) {
 				
 				return;
-			}			if (e.dx > 0 && bcrop.left + bcrop.width + e.dx > this.width) {
+			}			if (bcrop.left + new_width > this.width) {
 				
 				return crop.width = this.width - bcrop.left;
 			} else if (this.width >= new_width && new_width >= this.data.minimum_text_width) {
@@ -3665,6 +3665,7 @@ class MmeasuringTextState {
 	
 	calculateTextLines(context,maxWidth,lineHeight){
 		
+		this.minimum_text_width = 0;
 		let words = this.text.split(' ');
 		let line = '';
 		let lines = [];
@@ -3691,19 +3692,58 @@ class MmeasuringTextState {
 				line = testLine;
 			}		}		lines.push(line);
 		
+		if (this.minimum_text_width > this.canvas.width) {
+			
+			this.minimum_text_width = this.canvas.width;
+		}		
 		return lines;
 	}
 	
 	
-	calculateNewHeight(new_width){
+	calculateNewHeight(new_width,size = this.font.size){
 		
 		let ctx = this.canvas.getContext('2d');
-		ctx.font = this.font.size + 'px ' + this.font.family;
+		ctx.save();
+		
+		ctx.font = size + 'px ' + this.font.family;
 		ctx.textAlign = this.font.align;
-		ctx.fillStyle = this.font.color;
-		const lines = this.calculateTextLines(ctx,new_width,this.font.lineHeight * this.font.size);
-		return lines.length * (this.font.lineHeight * this.font.size);
+		const lines = this.calculateTextLines(ctx,new_width,this.font.lineHeight * size);
+		
+		ctx.restore();
+		return lines.length * (this.font.lineHeight * size);
 	}
+	
+	
+	calculateMaximumFontSize(){
+		
+		this.font.maxsize = 2048;
+		let new_height = this.calculateNewHeight(this.canvas.width,this.font.maxsize);
+		console.log(this.canvas.width * this.canvas.height,this.text.length * this.font.lineHeight * this.font.size * this.font.size);
+		// font.size = (canvas.width * canvas.height) / (text.length * font.line-height)
+		// font.size = (canvas.width * canvas.height) / (text.length * font.line-height * font.line-height )
+		this.font.size = Math.sqrt((this.canvas.width * this.canvas.height) / (this.text.length * this.font.lineHeight));
+		
+		let iterations = 0;
+		while (new_height >= this.canvas.height){
+			
+			console.log(this.font.maxsize,this.canvas.height,new_height,((this.canvas.height) / new_height));
+			this.font.maxsize = this.font.maxsize * (((this.canvas.height) / new_height)) * 2;
+			new_height = this.calculateNewHeight(this.canvas.width,this.font.maxsize);
+			
+			iterations++;
+			
+			if (this.font.maxsize > 10000) {
+				
+				break;
+			}		}		
+		
+		console.log(iterations,this.font.size,this.font.maxsize);
+		// if font.size > font.maxsize
+		// 	font.size = font.maxsize
+		if (this.font.size > this.font.maxsize) {
+			
+			return this.font.maxsize = this.font.size;
+		}	}
 } MmeasuringTextState.init$();
 imba.inlineStyles(".nruzghb:not(#_):not(#_) {display: block;}\n\n");
 /*
@@ -3737,6 +3777,7 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 	get font() {
 		if (!$2$2.has(this)) { $2$2.set(this,{
 			size: 30,
+			maxsize: 30,
 			family: "Arial",
 			color: "white",
 			align: "center",
@@ -3772,12 +3813,14 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		
 		// Before painting text I use crop data to crop original image
 		[this.width,this.height] = this.data.getSize(this.data.crop.width * this.data.uploaded_image.width,this.data.uploaded_image.height * this.data.crop.height);
-		this.text_crop.width = this.width * 0.9;
+		this.text_crop.width = this.width;
 		this.text_crop.height = this.height;
-		this.text_crop.left = this.width * 0.05;
+		this.text_crop.left = 0;
 		this.text_crop.top = 0;
 		
+		// measuringData.text = "if"
 		measuringData.text = "After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.";
+		// measuringData.text = "After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us."
 		measuringData.crop = this.text_crop;
 		measuringData.font = this.font;
 		measuringData.width = this.width;
@@ -3788,11 +3831,13 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		measuringData.canvas.width = this.width;
 		measuringData.canvas.height = this.height;
 		measuringData.canvas.imageSmoothingQuality = 'high';
+		measuringData.calculateMaximumFontSize();
 		this.renderImage();
 		
 		// Calculate top to display it in the center of the canvas
 		this.text_crop.top = (this.height - this.text_crop.total_text_height) / 2;
 		return this.calculateLuminance();
+		// adjkfvn()
 	}
 	
 	// Needed to define correct font collor. 
@@ -3808,6 +3853,17 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 		} else {
 			return this.font.color = "black";
 		}	}
+	
+	adjkfvn(){
+		var self = this;
+		
+		return setTimeout(function() {
+			
+			self.font.size *= 1.5;
+			return console.log(self.font.size);
+			// adjkfvn()
+		},1000);
+	}
 	
 	renderImage(){
 		
@@ -3865,7 +3921,6 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 				
 				this.text_crop.top = this.height - this.text_crop.total_text_height;
 			}		}		
-		// textBoxCheck()
 		
 		this.text_crop.height = this.text_crop.total_text_height;
 		// Center the text position around y coordinate
@@ -3879,8 +3934,8 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 			// Change position of next line to be lower
 			$res.push((y += lineHeight));
 		}		return $res;
-		
 	}
+	
 	// # This is helper function for resizing text
 	// # It prevents the going of the text box out of canvas
 	// def textBoxCheck
@@ -3926,34 +3981,48 @@ class CroppedImage extends imba.tags.get('component','ImbaElement') {
 	
 	
 	render(){
-		var $t$0, $c$0, $b$0, $d$0, $v$0, $t$1, $b$1, $d$1;
+		var $t$0, $c$0, $b$0, $d$0, $t$1, $b$1, $d$1, $v$1, $t$2, $b$2, $d$2, $v$2;
 		
 		this.renderImage();
 		$t$0=this;
 		$t$0.open$();
 		$c$0 = ($b$0=$d$0=1,$t$0.$) || ($b$0=$d$0=0,$t$0.$={});
-		($v$0=this.width,$v$0===$c$0.g || ($t$0.css$var('--e6wu0bc',$c$0.g=$v$0,'px','w')));
-		($v$0=this.height,$v$0===$c$0.h || ($t$0.css$var('--e6wu0bd',$c$0.h=$v$0,'px','h')));
 		((!$b$0||$d$0&2) && $t$0.flagSelf$('e6wu0bb'));
-		($v$0=measuringData.canvas,($v$0===$c$0.i&&$b$0) || ($c$0.i_ = $t$0.insert$($c$0.i=$v$0,128,$c$0.i_)));
-		$t$1 = ($b$1=$d$1=1,$c$0.j) || ($b$1=$d$1=0,$c$0.j=$t$1=imba.createComponent(MeasuringBox,$t$0,null,null));
-		$b$1 || $t$1.bind$('data',{get:function(){ return measuringData },set:function(v$){ measuringData = v$; }});
-		$b$1 || !$t$1.setup || $t$1.setup($d$1);
-		$t$1.end$($d$1);
-		$b$1 || $t$1.insertInto$($t$0);
+		$t$1 = ($b$1=$d$1=1,$c$0.h) || ($b$1=$d$1=0,$c$0.h=$t$1=imba.createElement('div',$t$0,'e6wu0be',null));
+		($v$1=this.width,$v$1===$c$0.i || ($t$1.css$var('--e6wu0bf',$c$0.i=$v$1,'px','w')));
+		($v$1=this.height,$v$1===$c$0.j || ($t$1.css$var('--e6wu0bg',$c$0.j=$v$1,'px','h')));
+		($v$1=measuringData.canvas,($v$1===$c$0.k&&$b$1) || ($c$0.k_ = $t$1.insert$($c$0.k=$v$1,128,$c$0.k_)));
+		$t$2 = ($b$2=$d$2=1,$c$0.l) || ($b$2=$d$2=0,$c$0.l=$t$2=imba.createComponent(MeasuringBox,$t$1,null,null));
+		$b$2 || $t$2.bind$('data',{get:function(){ return measuringData },set:function(v$){ measuringData = v$; }});
+		$b$2 || !$t$2.setup || $t$2.setup($d$2);
+		$t$2.end$($d$2);
+		$b$2 || $t$2.insertInto$($t$1);
+		$b$0 || ($t$1=imba.createElement('div',$t$0,'actions',null));
+		$t$2 = ($b$2=$d$2=1,$c$0.n) || ($b$2=$d$2=0,$c$0.n=$t$2=imba.createElement('input',$t$1,null,null));
+		$b$2 || ($t$2.type='range');
+		$b$2 || ($t$2.name='fontsize');
+		$v$2=$c$0.o || ($c$0.o=$t$2.bind$('data',[null,'size']));
+		$v$2[0]=this.font;
+		$b$2 || ($t$2.step='0.1');
+		$b$2 || ($t$2.min='4');
+		($v$2=("" + (this.font.maxsize + 1)),$v$2===$c$0.p || ($t$2.max=$c$0.p=$v$2));
+		$b$2 || !$t$2.setup || $t$2.setup($d$2);
+		$t$2.end$($d$2);
 		$t$0.close$($d$0);
 		return $t$0;
 	}
 } CroppedImage.init$(); imba.tags.define('cropped-image-e6wu0b',CroppedImage,{});
 
-imba.inlineStyles(".e6wu0bb:not(#_):not(#_) {position: relative;\ndisplay: block;\nwidth: var(--e6wu0bc);\nheight: var(--e6wu0bd);\noverflow: visible;\nbackground: hsla(201.00,100.00%,96.08%,100%);}\n\n");
+imba.inlineStyles(".e6wu0bb:not(#_):not(#_) {display: block;}\n\n.e6wu0be:not(#_):not(#_) {position: relative;\ndisplay: block;\nwidth: var(--e6wu0bf);\nheight: var(--e6wu0bg);\noverflow: visible;\nbackground: hsla(0.00,0.00%,100.00%,0%);}\n\n");
 /*
-.e6wu0bb:not(#_):not(#_) {position: relative;
+.e6wu0bb:not(#_):not(#_) {display: block;}
+
+.e6wu0be:not(#_):not(#_) {position: relative;
 display: block;
-width: var(--e6wu0bc);
-height: var(--e6wu0bd);
+width: var(--e6wu0bf);
+height: var(--e6wu0bg);
 overflow: visible;
-background: hsla(201.00,100.00%,96.08%,100%);}
+background: hsla(0.00,0.00%,100.00%,0%);}
 
 
 */
@@ -4077,14 +4146,14 @@ class CropImage extends imba.tags.get('component','ImbaElement') {
 	
 } CropImage.init$(); imba.tags.define('crop-image-f0vwtm',CropImage,{});
 
-imba.inlineStyles(".f0vwtmb:not(#_):not(#_) {display: block;}\n\n.f0vwtmc:not(#_):not(#_) {position: relative;\ndisplay: block;\noverflow: visible;\nbackground: hsla(201.00,100.00%,96.08%,100%);}\n\n.f0vwtmf:not(#_):not(#_) {position: absolute;\ntop: var(--f0vwtmg);\nwidth: var(--f0vwtmh);\nleft: 0rem;}\n\ncrop-image-f0vwtm .dragger:not(#_) {position: absolute;\nwidth: 16px;\nheight: 16px;\nbackground: rgba(192, 192, 192, 0.5);\nz-index: 3;}\n\n");
+imba.inlineStyles(".f0vwtmb:not(#_):not(#_) {display: block;}\n\n.f0vwtmc:not(#_):not(#_) {position: relative;\ndisplay: block;\noverflow: visible;\nbackground: hsla(0.00,0.00%,100.00%,0%);}\n\n.f0vwtmf:not(#_):not(#_) {position: absolute;\ntop: var(--f0vwtmg);\nwidth: var(--f0vwtmh);\nleft: 0rem;}\n\ncrop-image-f0vwtm .dragger:not(#_) {position: absolute;\nwidth: 16px;\nheight: 16px;\nbackground: rgba(192, 192, 192, 0.5);\nz-index: 3;}\n\n");
 /*
 .f0vwtmb:not(#_):not(#_) {display: block;}
 
 .f0vwtmc:not(#_):not(#_) {position: relative;
 display: block;
 overflow: visible;
-background: hsla(201.00,100.00%,96.08%,100%);}
+background: hsla(0.00,0.00%,100.00%,0%);}
 
 .f0vwtmf:not(#_):not(#_) {position: absolute;
 top: var(--f0vwtmg);

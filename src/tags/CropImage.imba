@@ -69,7 +69,7 @@ export tag CropImage
 			imba.commit()
 
 	def render
-		<self[pos: relative d:block overflow:visible bg:blue1]>
+		<self[pos: relative d:block overflow:visible bg:transparent]>
 			# Canvas with image
 			canvas
 

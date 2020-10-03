@@ -9,6 +9,7 @@ export tag CroppedImage
 	image = new Image
 	font = {
 		size: 30
+		maxsize: 30
 		family: "Arial"
 		color: "white"
 		align: "center"
@@ -27,12 +28,14 @@ export tag CroppedImage
 	def mount
 		# Before painting text I use crop data to crop original image
 		[width, height] = data.getSize(data.crop.width * data.uploaded_image.width, data.uploaded_image.height * data.crop.height)
-		text_crop.width = width * 0.9
+		text_crop.width = width
 		text_crop.height = height
-		text_crop.left = width * 0.05
+		text_crop.left = 0
 		text_crop.top = 0
 
+		# measuringData.text = "if"
 		measuringData.text = "After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us."
+		# measuringData.text = "After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us.After finally growing annoyed with T-Rex chases we decided to end that, and fly to a nicer Place, but it is up to you to steer your plane to an Oasis with the Rest of us."
 		measuringData.crop = text_crop
 		measuringData.font = font
 		measuringData.width = width
@@ -43,11 +46,13 @@ export tag CroppedImage
 		measuringData.canvas.width = width
 		measuringData.canvas.height = height
 		measuringData.canvas.imageSmoothingQuality = 'high'
+		measuringData.calculateMaximumFontSize()
 		renderImage()
 
 		# Calculate top to display it in the center of the canvas
 		text_crop.top = (height - text_crop.total_text_height) / 2
 		calculateLuminance()
+		# adjkfvn()
 
 	# Needed to define correct font collor. 
 	# Dark on lighter pictures and light on darker
@@ -58,6 +63,12 @@ export tag CroppedImage
 		if Y < 128
 			font.color = "white"
 		else font.color = "black"
+
+	def adjkfvn
+		setTimeout(&, 1000) do
+			font.size *= 1.5
+			console.log font.size
+			# adjkfvn()
 
 	def renderImage
 		let ctx = measuringData.canvas.getContext('2d')
@@ -102,9 +113,8 @@ export tag CroppedImage
 				console.log "😱 😱 😱"
 			else
 				text_crop.top = height - text_crop.total_text_height
-		
-		# textBoxCheck()
-		
+
+
 		text_crop.height = text_crop.total_text_height
 		# Center the text position around y coordinate
 		y = y - text_crop.total_text_height / 2 + lineHeight
@@ -114,12 +124,11 @@ export tag CroppedImage
 			# Change position of next line to be lower
 			y += lineHeight
 
-		
 	# # This is helper function for resizing text
 	# # It prevents the going of the text box out of canvas
 	# def textBoxCheck
-			
-				
+
+
 
 	def getAverageRGB
 		let blockSize = 5 # only visit every 5 pixels
@@ -155,6 +164,9 @@ export tag CroppedImage
 
 	def render
 		renderImage()
-		<self[pos: relative d:block w: {width}px h: {height}px overflow:visible bg:blue1]>
-			measuringData.canvas
-			<MeasuringBox bind=measuringData>
+		<self[d:block]>
+			<[pos: relative d:block w: {width}px h: {height}px overflow:visible bg:transparent]>
+				measuringData.canvas
+				<MeasuringBox bind=measuringData>
+			<.actions>
+				<input type='range' name='fontsize' bind=font.size step='0.1' min='4' max="{font.maxsize + 1}">

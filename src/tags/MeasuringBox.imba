@@ -102,7 +102,7 @@ export tag MeasuringBox
 		else
 			if data.calculateNewHeight(new_width) > height && new_width < crop.width
 				return
-			if e.dx > 0 && bcrop.left + bcrop.width + e.dx > width
+			if bcrop.left + new_width > width
 				crop.width = width - bcrop.left
 			elif width >= new_width >= data.minimum_text_width
 				crop.width = new_width
